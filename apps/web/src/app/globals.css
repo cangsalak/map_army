@@ -1,0 +1,131 @@
+@import 'cesium/Build/Cesium/Widgets/widgets.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --app-bg: #080F20;
+    --panel-primary: #101A2D;
+    --panel-secondary: #162238;
+    --surface-elevated: #1C2940;
+    --accent-primary: #06B6D4;
+    --accent-secondary: #3B82F6;
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #F43F5E;
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --border-subtle: rgba(148, 163, 184, 0.20);
+    --focus-ring: #22D3EE;
+
+    --background: 222 60% 8%;
+    --foreground: 210 40% 98%;
+  }
+
+  body {
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-x: hidden;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080F20;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1C2940;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #06B6D4;
+}
+
+/* Enterprise Geospatial Command Center Panels */
+.gis-panel {
+  background: rgba(16, 26, 45, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(148, 163, 184, 0.20);
+}
+
+.gis-panel-elevated {
+  background: rgba(28, 41, 64, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.gis-panel-hover:hover {
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+}
+
+/* WCAG 2.2 AA Accessible Focus Ring */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid #22D3EE !important;
+  outline-offset: 2px !important;
+}
+
+/* Minimum Accessible Touch Target: 44 x 44 CSS px */
+.min-touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Map Toolbar Standard Target: 48 x 48 CSS px */
+.map-touch-target {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+/* Hide Cesium Default Toolbar elements replaced with custom Enterprise UI */
+.cesium-viewer-bottom {
+  display: none !important;
+}
+
+.cesium-widget-credits {
+  font-size: 11px !important;
+  color: #94A3B8 !important;
+  opacity: 0.8;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slideLeft {
+  animation: slideLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

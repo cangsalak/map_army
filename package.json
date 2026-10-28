@@ -1,0 +1,30 @@
+{
+  "name": "geomonitor-3d",
+  "version": "1.0.0",
+  "description": "GeoMonitor 3D — Drone-Based Area Monitoring Platform (ระบบติดตามและวิเคราะห์การเปลี่ยนแปลงพื้นที่ 3 มิติ)",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev --workspace=@geomonitor/api",
+    "dev:web": "npm run dev --workspace=@geomonitor/web",
+    "dev:worker": "npm run dev --workspace=@geomonitor/worker",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f infra/docker/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
