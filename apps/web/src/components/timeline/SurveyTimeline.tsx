@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Calendar, ChevronRight, Sliders, CheckCircle2, AlertTriangle, Layers, Play } from 'lucide-react';
+import { Button } from '@/components/ui/primitives';
 
 export interface TimelineSurvey {
   id: string;
@@ -36,27 +37,29 @@ export default function SurveyTimeline({
 
   return (
     <div
-      className="h-28 bg-[#101A2D]/95 border-t border-[rgba(148,163,184,0.20)] px-6 py-2.5 flex flex-col justify-between z-20 backdrop-blur-md select-none shadow-2xl"
+      className="h-28 bg-card/95 border-t border-border text-foreground px-6 py-2.5 flex flex-col justify-between z-20 backdrop-blur-md select-none shadow-2xl"
       role="region"
       aria-label="เส้นเวลาประวัติรอบบินสำรวจ"
     >
       {/* Top Controls: Survey Header and Action Buttons */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-[#06B6D4]" />
-          <span className="font-bold text-[#F1F5F9]">เส้นเวลาประวัติการบินสำรวจ (Historical Timeline)</span>
-          <span className="text-[#94A3B8] text-xs">({surveys.length} รอบการสำรวจ)</span>
+          <Calendar className="w-4 h-4 text-primary" />
+          <span className="font-bold text-foreground">เส้นเวลาประวัติการบินสำรวจ (Historical Timeline)</span>
+          <span className="text-muted-foreground text-xs">({surveys.length} รอบการสำรวจ)</span>
         </div>
 
         {onRunComparison && (
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={onRunComparison}
             disabled={!baselineSurveyId || !comparisonSurveyId || baselineSurveyId === comparisonSurveyId}
-            className="min-h-[44px] px-4 py-2 bg-[#06B6D4] hover:bg-[#22D3EE] disabled:opacity-40 text-[#080F20] font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(6,182,212,0.35)] focus-visible:ring-2 focus-visible:ring-[#22D3EE] cursor-pointer"
+            className="text-xs font-bold"
           >
-            <Play className="w-4 h-4 fill-current" />
+            <Play className="w-4 h-4 fill-current mr-1.5" />
             เปรียบเทียบการเปลี่ยนแปลง (Analyze Changes)
-          </button>
+          </Button>
         )}
       </div>
 
@@ -76,22 +79,22 @@ export default function SurveyTimeline({
               key={survey.id}
               className={`flex-shrink-0 px-3.5 py-2 rounded-xl border text-xs transition-all flex items-center gap-3 ${
                 isBaseline
-                  ? 'bg-[#1C2940] border-[#3B82F6] text-white shadow-[0_0_12px_rgba(59,130,246,0.3)] ring-1 ring-[#3B82F6]'
+                  ? 'bg-primary/10 border-primary text-foreground shadow-sm ring-1 ring-primary'
                   : isComparison
-                  ? 'bg-[#1C2940] border-[#06B6D4] text-white shadow-[0_0_12px_rgba(6,182,212,0.3)] ring-1 ring-[#06B6D4]'
-                  : 'bg-[#162238]/80 border-[rgba(148,163,184,0.15)] hover:border-[rgba(148,163,184,0.3)] text-[#CBD5E1]'
+                  ? 'bg-info/10 border-info text-foreground shadow-sm ring-1 ring-info'
+                  : 'bg-card-secondary border-border hover:border-primary/40 text-foreground'
               }`}
             >
               <div className="flex flex-col">
                 <div className="font-bold flex items-center gap-1.5 text-sm">
                   <span>{formattedDate}</span>
                   {survey.processingStatus === 'completed' ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
                   ) : (
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-warning" />
                   )}
                 </div>
-                <div className="text-[11px] text-[#94A3B8] font-mono mt-0.5">
+                <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
                   {survey.surveyCode} • GSD {survey.groundSampleDistanceCm || 2.4}cm
                 </div>
               </div>
@@ -103,10 +106,10 @@ export default function SurveyTimeline({
                   title="กำหนดเป็นภาพตั้งต้น (Set as Baseline)"
                   aria-label={`กำหนดรอบบิน ${survey.surveyCode} เป็นภาพตั้งต้น`}
                   aria-pressed={isBaseline}
-                  className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer ${
+                  className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${
                     isBaseline
-                      ? 'bg-[#3B82F6] text-white shadow-md'
-                      : 'bg-[#101A2D] text-[#94A3B8] hover:text-[#3B82F6] hover:bg-[#162238] border border-[rgba(148,163,184,0.2)]'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-card text-muted-foreground hover:text-primary hover:bg-muted border border-border'
                   }`}
                 >
                   ฐาน (Base)
@@ -116,10 +119,10 @@ export default function SurveyTimeline({
                   title="กำหนดเป็นภาพเปรียบเทียบ (Set as Comparison)"
                   aria-label={`กำหนดรอบบิน ${survey.surveyCode} เป็นภาพเปรียบเทียบ`}
                   aria-pressed={isComparison}
-                  className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-[#06B6D4] cursor-pointer ${
+                  className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${
                     isComparison
-                      ? 'bg-[#06B6D4] text-[#080F20] shadow-md'
-                      : 'bg-[#101A2D] text-[#94A3B8] hover:text-[#06B6D4] hover:bg-[#162238] border border-[rgba(148,163,184,0.2)]'
+                      ? 'bg-info text-info-foreground shadow-sm'
+                      : 'bg-card text-muted-foreground hover:text-info hover:bg-muted border border-border'
                   }`}
                 >
                   เทียบ (Cmp)

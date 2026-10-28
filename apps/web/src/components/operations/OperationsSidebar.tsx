@@ -96,7 +96,7 @@ export default function OperationsSidebar({
   onLocationDeleted,
   onTeamDeleted,
 }: OperationsSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'menu' | 'teams' | 'locations' | 'layers'>('layers');
+  const [activeTab, setActiveTab] = useState<'layers' | 'teams' | 'locations'>('layers');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
@@ -196,123 +196,77 @@ export default function OperationsSidebar({
   };
 
   return (
-    <aside className="w-80 h-full bg-navy-900/95 border-r border-cyan-500/20 flex flex-col z-20 backdrop-blur-md select-none">
+    <aside className="w-80 h-full bg-card/95 border-r border-border flex flex-col z-20 backdrop-blur-md select-none text-foreground">
       {/* Sidebar Header & Tabs */}
-      <div className="p-3 border-b border-navy-800 flex flex-col gap-3">
+      <div className="p-3 border-b border-border bg-card-secondary/70 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
-            <span className="font-semibold text-sm tracking-wide text-white">
-              ศูนย์ปฏิบัติการภาคสนาม
-            </span>
+            <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+              <Radio className="w-4 h-4 animate-pulse" />
+            </div>
+            <div>
+              <span className="font-bold text-xs tracking-wide text-foreground">
+                ศูนย์ปฏิบัติการภาคสนาม
+              </span>
+              <p className="text-[10px] text-muted-foreground">Field Operations Center</p>
+            </div>
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+          <span className="text-[11px] px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 font-semibold font-mono">
             {layers.length} ชั้นข้อมูล
           </span>
         </div>
 
-        {/* 4 Tabs */}
-        <div className="grid grid-cols-4 gap-1 bg-navy-950 p-1 rounded-lg border border-navy-800">
-          <button
-            onClick={() => setActiveTab('menu')}
-            className={`py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
-              activeTab === 'menu'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="เมนูระบบหลัก (Main Navigation)"
-          >
-            <Menu className="w-3.5 h-3.5" />
-            เมนู
-          </button>
+        {/* 3 Main Tactical Tabs */}
+        <div className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-xl border border-border">
           <button
             onClick={() => setActiveTab('layers')}
-            className={`py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
+            className={`py-1.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'layers'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-card text-primary font-bold border border-border shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            ชั้นข้อมูล
+            <span>ชั้นข้อมูล</span>
           </button>
           <button
             onClick={() => setActiveTab('teams')}
-            className={`py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
+            className={`py-1.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'teams'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-card text-primary font-bold border border-border shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            ทีม
+            <span>ทีม</span>
           </button>
           <button
             onClick={() => setActiveTab('locations')}
-            className={`py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
+            className={`py-1.5 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'locations'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-card text-primary font-bold border border-border shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <MapPin className="w-3.5 h-3.5" />
-            ฐาน/จุด
+            <span>ฐาน/จุด</span>
           </button>
         </div>
       </div>
 
-      {/* Tab 0: System Navigation Menu */}
-      {activeTab === 'menu' && (
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          <div className="px-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            เมนูระบบหลัก (Main Navigation)
-          </div>
-          <div className="space-y-1">
-            {[
-              { label: 'ศูนย์บัญชาการ 3D (Drone & Cut/Fill)', href: '/', icon: Map },
-              { label: 'แผนที่ปฏิบัติการ (Field Ops)', href: '/operations/map', icon: Activity },
-              { label: 'จัดการพื้นที่ดูแล (Areas)', href: '/areas', icon: Compass },
-              { label: 'การจัดการโครงการ (Projects)', href: '/projects', icon: FolderKanban },
-              { label: 'รอบบินสำรวจและไฟล์โดรน', href: '/surveys', icon: Layers },
-              { label: 'วิเคราะห์การเปลี่ยนแปลง & ปริมาตร', href: '/analysis', icon: TrendingDown },
-              { label: 'รายงานสรุป (Reports)', href: '/reports', icon: FileCheck },
-              { label: 'บันทึกความปลอดภัย (Audit)', href: '/audit', icon: ShieldAlert },
-              { label: 'ผู้ดูแลระบบ (Admin)', href: '/admin', icon: Sliders },
-            ].map((item) => {
-              const Icon = item.icon;
-              const isCurrent = item.href === '/operations/map';
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-medium flex items-center gap-3 transition-colors ${
-                    isCurrent
-                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                      : 'text-slate-300 hover:text-white hover:bg-navy-800'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isCurrent ? 'text-slate-950' : 'text-cyan-400'}`} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Tab 1: Layers Manager (Main Workspace) */}
       {activeTab === 'layers' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-2 border-b border-navy-800 bg-navy-950/40 text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="p-2 border-b border-border bg-card-secondary/70 text-[11px] text-muted-foreground flex items-center justify-between">
             <span>คลิกเพื่อเลือก <strong>ชั้นข้อมูลที่ใช้งาน</strong> (Active Layer)</span>
-            <span className="text-[10px] text-cyan-400">รูปแปลง: บันทึกลงชั้นนี้</span>
+            <span className="text-[10px] text-primary font-medium">รูปแปลง: บันทึกลงชั้นนี้</span>
           </div>
 
           {/* Layer Actions Toolbar: Add Layer & Import KML/KMZ */}
-          <div className="p-2 border-b border-navy-800 bg-navy-950/60 flex items-center gap-1.5">
+          <div className="p-2 border-b border-border bg-card-secondary/40 flex items-center gap-1.5">
             <button
               onClick={onOpenCreateLayer}
-              className="flex-1 min-h-[34px] px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 min-h-[34px] px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>สร้างชั้นข้อมูล</span>
@@ -321,10 +275,10 @@ export default function OperationsSidebar({
             {onOpenImportKml && (
               <button
                 onClick={onOpenImportKml}
-                className="flex-1 min-h-[34px] px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="flex-1 min-h-[34px] px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 title="นำเข้าไฟล์ .kml หรือ .kmz จาก Google Earth หรือ GIS"
               >
-                <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                <Upload className="w-3.5 h-3.5 text-primary" />
                 <span>Import KML/KMZ</span>
               </button>
             )}
@@ -341,8 +295,8 @@ export default function OperationsSidebar({
                   onClick={() => onSelectActiveLayer && onSelectActiveLayer(layer.id)}
                   className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
                     isActive
-                      ? 'bg-navy-950/90 border-cyan-500 shadow-md shadow-cyan-500/10'
-                      : 'bg-navy-950/50 border-navy-800 hover:border-navy-700'
+                      ? 'bg-primary/5 border-primary shadow-xs ring-1 ring-primary/20'
+                      : 'bg-card-secondary/60 border-border hover:border-primary/40'
                   }`}
                 >
                   {/* Top row: Active indicator, name, count, actions */}
@@ -356,12 +310,12 @@ export default function OperationsSidebar({
                         }}
                         className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                           isActive
-                            ? 'border-cyan-400 bg-cyan-500/20'
-                            : 'border-slate-600 hover:border-slate-400'
+                            ? 'border-primary bg-primary/20'
+                            : 'border-muted-foreground/40 hover:border-foreground'
                         }`}
                         title={isActive ? 'ชั้นข้อมูลที่กำลังใช้งานอยู่' : 'คลิกเพื่อตั้งเป็นชั้นข้อมูลใช้งาน'}
                       >
-                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
+                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                       </button>
 
                       {/* Visibility toggle */}
@@ -371,7 +325,7 @@ export default function OperationsSidebar({
                           onToggleLayerVisibility(layer.id, layer.visibility);
                         }}
                         className={`p-1 rounded shrink-0 ${
-                          layer.visibility ? 'text-cyan-400 hover:bg-navy-800' : 'text-slate-600'
+                          layer.visibility ? 'text-primary hover:bg-muted' : 'text-muted-foreground/50'
                         }`}
                         title={layer.visibility ? 'ซ่อนชั้นข้อมูล' : 'แสดงชั้นข้อมูล'}
                       >
@@ -395,20 +349,20 @@ export default function OperationsSidebar({
                             if (e.key === 'Escape') setEditingLayerId(null);
                           }}
                           onBlur={() => handleSaveRename(layer.id)}
-                          className="bg-navy-900 border border-cyan-500 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none w-full"
+                          className="bg-card border border-primary rounded-lg px-1.5 py-0.5 text-xs text-foreground focus:outline-none w-full"
                         />
                       ) : (
                         <div className="flex items-center gap-1.5 truncate">
                           <span
                             className={`text-xs font-semibold truncate ${
-                              isActive ? 'text-cyan-300' : 'text-white'
+                              isActive ? 'text-primary' : 'text-foreground'
                             }`}
                           >
                             {layer.name}
                           </span>
                           {isReadOnly && (
                             <span title="อ่านอย่างเดียว (Read Only)">
-                              <Lock className="w-3 h-3 text-amber-400 shrink-0" />
+                              <Lock className="w-3 h-3 text-amber-500 shrink-0" />
                             </span>
                           )}
                         </div>
@@ -417,19 +371,19 @@ export default function OperationsSidebar({
 
                     {/* Feature Count & Badges */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-navy-900 text-slate-400 border border-navy-800 font-mono">
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-card text-muted-foreground border border-border font-mono">
                         {layer.featureCount || 0}
                       </span>
                       <span
-                        className="w-2.5 h-2.5 rounded-full border border-white/20"
-                        style={{ backgroundColor: layer.colorHex || '#00ffff' }}
+                        className="w-2.5 h-2.5 rounded-full border border-border shadow-2xs"
+                        style={{ backgroundColor: layer.colorHex || 'var(--primary)' }}
                       />
                     </div>
                   </div>
 
                   {/* Middle row: Opacity Slider */}
                   <div
-                    className="flex items-center gap-2 text-[10px] text-slate-400 px-1"
+                    className="flex items-center gap-2 text-[10px] text-muted-foreground px-1"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <span>ความโปร่งแสง:</span>
@@ -440,16 +394,16 @@ export default function OperationsSidebar({
                       step="0.05"
                       value={layer.opacity}
                       onChange={(e) => onChangeLayerOpacity(layer.id, parseFloat(e.target.value))}
-                      className="flex-1 accent-cyan-400 h-1 bg-navy-800 rounded-lg cursor-pointer"
+                      className="flex-1 accent-primary h-1 bg-muted rounded-lg cursor-pointer"
                     />
-                    <span className="w-7 text-right font-mono text-[9px]">
+                    <span className="w-7 text-right font-mono text-[9px] text-foreground">
                       {Math.round(layer.opacity * 100)}%
                     </span>
                   </div>
 
                   {/* Bottom row: Tool actions (Reorder, Rename, Export, Import, Delete) */}
                   <div
-                    className="flex items-center justify-between pt-1 border-t border-navy-800/80 text-[10px] text-slate-400"
+                    className="flex items-center justify-between pt-1 border-t border-border/70 text-[10px] text-muted-foreground"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Reorder Buttons */}
@@ -457,7 +411,7 @@ export default function OperationsSidebar({
                       <button
                         disabled={index === 0}
                         onClick={() => handleMoveLayer(index, 'up')}
-                        className="p-1 hover:text-white disabled:opacity-20 hover:bg-navy-800 rounded transition-colors"
+                        className="p-1 hover:text-foreground disabled:opacity-20 hover:bg-muted rounded transition-colors"
                         title="เลื่อนขึ้น"
                       >
                         <ArrowUp className="w-3 h-3" />
@@ -465,7 +419,7 @@ export default function OperationsSidebar({
                       <button
                         disabled={index === layers.length - 1}
                         onClick={() => handleMoveLayer(index, 'down')}
-                        className="p-1 hover:text-white disabled:opacity-20 hover:bg-navy-800 rounded transition-colors"
+                        className="p-1 hover:text-foreground disabled:opacity-20 hover:bg-muted rounded transition-colors"
                         title="เลื่อนลง"
                       >
                         <ArrowDown className="w-3 h-3" />
@@ -477,7 +431,7 @@ export default function OperationsSidebar({
                       {onZoomToLayer && (
                         <button
                           onClick={() => onZoomToLayer(layer.id)}
-                          className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-navy-800 rounded transition-colors"
+                          className="p-1 text-muted-foreground hover:text-emerald-500 hover:bg-muted rounded transition-colors"
                           title="ซูมไปยังชั้นข้อมูล (Zoom to Layer)"
                         >
                           <Maximize2 className="w-3 h-3" />
@@ -488,7 +442,7 @@ export default function OperationsSidebar({
                           setEditingLayerId(layer.id);
                           setEditingName(layer.name);
                         }}
-                        className="p-1 text-slate-400 hover:text-cyan-400 hover:bg-navy-800 rounded"
+                        className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded"
                         title="เปลี่ยนชื่อชั้นข้อมูล"
                       >
                         <Edit2 className="w-3 h-3" />
@@ -496,7 +450,7 @@ export default function OperationsSidebar({
                       {onExportGeoJson && (
                         <button
                           onClick={() => onExportGeoJson(layer.id, layer.name)}
-                          className="p-1 text-slate-400 hover:text-cyan-400 hover:bg-navy-800 rounded"
+                          className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded"
                           title="ส่งออก GeoJSON"
                         >
                           <Download className="w-3 h-3" />
@@ -505,7 +459,7 @@ export default function OperationsSidebar({
                       {onExportKml && (
                         <button
                           onClick={() => onExportKml(layer.id, layer.name)}
-                          className="p-1 text-slate-400 hover:text-indigo-400 hover:bg-navy-800 rounded font-mono text-[9px] font-bold"
+                          className="p-1 text-muted-foreground hover:text-indigo-500 hover:bg-muted rounded font-mono text-[9px] font-bold"
                           title="ส่งออก OGC KML 2.2"
                         >
                           KML
@@ -514,7 +468,7 @@ export default function OperationsSidebar({
                       {onExportKmz && (
                         <button
                           onClick={() => onExportKmz(layer.id, layer.name)}
-                          className="p-1 text-slate-400 hover:text-indigo-300 hover:bg-navy-800 rounded font-mono text-[9px] font-bold"
+                          className="p-1 text-muted-foreground hover:text-indigo-500 hover:bg-muted rounded font-mono text-[9px] font-bold"
                           title="ส่งออก Compressed KMZ"
                         >
                           KMZ
@@ -523,7 +477,7 @@ export default function OperationsSidebar({
                       {onConvertToManagedArea && (
                         <button
                           onClick={() => onConvertToManagedArea(layer.id, layer.name)}
-                          className="p-1 text-slate-400 hover:text-amber-400 hover:bg-navy-800 rounded transition-colors"
+                          className="p-1 text-muted-foreground hover:text-amber-500 hover:bg-muted rounded transition-colors"
                           title="แปลงรูปแปลงเป็นพื้นที่รับผิดชอบ (Convert to Responsibility Area)"
                         >
                           <Shield className="w-3 h-3" />
@@ -532,7 +486,7 @@ export default function OperationsSidebar({
                       {onImportGeoJson && !isReadOnly && (
                         <button
                           onClick={() => onImportGeoJson(layer.id)}
-                          className="p-1 text-slate-400 hover:text-cyan-400 hover:bg-navy-800 rounded"
+                          className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded"
                           title="นำเข้า GeoJSON"
                         >
                           <Upload className="w-3 h-3" />
@@ -540,7 +494,7 @@ export default function OperationsSidebar({
                       )}
                       <button
                         onClick={() => handleDeleteLayer(layer)}
-                        className="p-1 text-red-400 hover:text-red-300 hover:bg-navy-800 rounded"
+                        className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
                         title="ลบชั้นข้อมูล"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -552,16 +506,16 @@ export default function OperationsSidebar({
             })}
 
             {layers.length === 0 && (
-              <div className="p-8 text-center text-xs text-slate-500">
+              <div className="p-8 text-center text-xs text-muted-foreground">
                 ยังไม่มีชั้นข้อมูลแผนที่ คลิกปุ่มด้านล่างเพื่อสร้าง
               </div>
             )}
           </div>
 
-          <div className="p-3 border-t border-navy-800 bg-navy-950/60">
+          <div className="p-3 border-t border-border bg-card-secondary/70">
             <button
               onClick={onOpenCreateLayer}
-              className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-navy-950 font-semibold rounded-lg text-xs flex items-center justify-center gap-1.5 hover:shadow-glow-cyan transition-all shadow-md"
+              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               สร้างชั้นข้อมูลใหม่ (Create Layer)
@@ -573,13 +527,13 @@ export default function OperationsSidebar({
       {/* Tab 2: Teams */}
       {activeTab === 'teams' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-navy-800 bg-navy-950/60 flex flex-col gap-2">
+          <div className="p-3 border-b border-border bg-card-secondary/70 flex flex-col gap-2">
             <input
               type="text"
               placeholder="ค้นหาชื่อทีม หรือรหัสประจำทีม..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-navy-900 border border-navy-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-2.5 py-1.5 bg-card border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
           </div>
 
@@ -590,40 +544,40 @@ export default function OperationsSidebar({
                 <div
                   key={team.id}
                   onClick={() => onSelectItem({ type: 'team', id: team.id })}
-                  className={`p-2.5 rounded-lg border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
                     isSelected
-                      ? 'bg-cyan-500/10 border-cyan-500 shadow-md'
-                      : 'bg-navy-950/70 border-navy-800/90 hover:border-navy-700'
+                      ? 'bg-primary/5 border-primary shadow-xs ring-1 ring-primary/20'
+                      : 'bg-card-secondary/60 border-border hover:border-primary/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-xs text-white">{team.name}</span>
+                    <span className="font-semibold text-xs text-foreground">{team.name}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono font-medium">
                         {team.identifier}
                       </span>
                       <button
                         onClick={(e) => handleDeleteTeam(team, e)}
-                        className="p-1 text-slate-500 hover:text-red-400 hover:bg-navy-800 rounded transition-colors"
+                        className="p-1 text-muted-foreground hover:text-destructive hover:bg-muted rounded transition-colors"
                         title="ลบชุดปฏิบัติการนี้"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                  <div className="text-[11px] text-muted-foreground flex items-center justify-between">
                     <span className="truncate max-w-[150px]">{team.description || 'ทีมปฏิบัติการ'}</span>
-                    <span className="text-[10px] text-slate-500 capitalize">{team.status}</span>
+                    <span className="text-[10px] text-muted-foreground capitalize font-medium">{team.status}</span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="p-3 border-t border-navy-800 bg-navy-950/60">
+          <div className="p-3 border-t border-border bg-card-secondary/70">
             <button
               onClick={onOpenCreateTeam}
-              className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-navy-950 font-semibold rounded-lg text-xs flex items-center justify-center gap-1.5 hover:shadow-glow-cyan transition-all"
+              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               ลงทะเบียนทีมใหม่
@@ -635,13 +589,13 @@ export default function OperationsSidebar({
       {/* Tab 3: Locations */}
       {activeTab === 'locations' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-navy-800 bg-navy-950/60">
+          <div className="p-3 border-b border-border bg-card-secondary/70">
             <input
               type="text"
               placeholder="ค้นหาฐาน หรือจุดปฏิบัติการ..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-navy-900 border border-navy-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-2.5 py-1.5 bg-card border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
           </div>
 
@@ -652,21 +606,21 @@ export default function OperationsSidebar({
                 <div
                   key={loc.id}
                   onClick={() => onSelectItem({ type: 'location', id: loc.id })}
-                  className={`p-2.5 rounded-lg border transition-all cursor-pointer flex flex-col gap-1 ${
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
                     isSelected
-                      ? 'bg-cyan-500/10 border-cyan-500 shadow-md'
-                      : 'bg-navy-950/70 border-navy-800/90 hover:border-navy-700'
+                      ? 'bg-primary/5 border-primary shadow-xs ring-1 ring-primary/20'
+                      : 'bg-card-secondary/60 border-border hover:border-primary/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-xs text-white">{loc.name}</span>
+                    <span className="font-semibold text-xs text-foreground">{loc.name}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-medium">
                         {loc.locationType}
                       </span>
                       <button
                         onClick={(e) => handleDeleteLocation(loc, e)}
-                        className="p-1 text-slate-500 hover:text-red-400 hover:bg-navy-800 rounded transition-colors"
+                        className="p-1 text-muted-foreground hover:text-destructive hover:bg-muted rounded transition-colors"
                         title="ลบจุดพิกัดนี้"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -674,17 +628,17 @@ export default function OperationsSidebar({
                     </div>
                   </div>
                   {loc.description && (
-                    <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">{loc.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{loc.description}</p>
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div className="p-3 border-t border-navy-800 bg-navy-950/60">
+          <div className="p-3 border-t border-border bg-card-secondary/70">
             <button
               onClick={onOpenCreateLocation}
-              className="w-full py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-1.5 hover:shadow-glow-cyan transition-all"
+              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               บันทึกฐาน/จุดพิกัดใหม่

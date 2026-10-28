@@ -67,41 +67,41 @@ export default function WaypointTimelineBar({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-[#101A2D]/95 border-t border-[rgba(148,163,184,0.20)] backdrop-blur-md select-none text-[#CBD5E1] shadow-2xl flex flex-col z-20">
+    <div className="bg-card/95 border-t border-border backdrop-blur-md select-none text-foreground shadow-2xl flex flex-col z-20">
       {/* 1. Flight Sequence Step Strip (Visible when flight lines exist) */}
       {flightLines.length > 0 && (
-        <div className="px-4 py-1.5 bg-[#080F20]/80 border-b border-[rgba(148,163,184,0.15)] flex items-center gap-1.5 overflow-x-auto text-[11px] whitespace-nowrap scrollbar-none">
-          <span className="text-[10px] uppercase font-bold text-[#94A3B8] mr-1 flex items-center gap-1 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] animate-pulse" />
+        <div className="px-4 py-1.5 bg-card-secondary border-b border-border flex items-center gap-1.5 overflow-x-auto text-[11px] whitespace-nowrap scrollbar-none">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground mr-1 flex items-center gap-1 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             ลำดับการบิน:
           </span>
 
-          <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[11px]">
+          <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
             🛫 Takeoff
           </span>
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
-          <span className="px-2 py-0.5 rounded bg-[#162238] border border-[rgba(148,163,184,0.20)] text-slate-300 font-mono text-[11px]">
+          <span className="px-2 py-0.5 rounded bg-secondary border border-border text-foreground font-mono text-[11px]">
             Transit
           </span>
 
           {flightLines.map((line, idx) => (
             <React.Fragment key={idx}>
-              <span className="text-slate-600">→</span>
+              <span className="text-muted-foreground">→</span>
               <span
                 className={`px-2 py-0.5 rounded border font-mono text-[11px] ${
                   line.passId === 'B'
-                    ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
-                    : 'bg-cyan-950/60 border-cyan-500/40 text-cyan-300'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-primary/10 border-primary/30 text-primary'
                 }`}
               >
                 {line.passId === 'B' ? `Pass B Line ${idx + 1}` : `Line ${idx + 1}`} ({line.photoPositions?.length || 0} 📷)
               </span>
               {idx < flightLines.length - 1 && (
                 <>
-                  <span className="text-slate-600">→</span>
-                  <span className="px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-600/30 text-amber-300 text-[10px] font-mono">
+                  <span className="text-muted-foreground">→</span>
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[10px] font-mono">
                     Turn
                   </span>
                 </>
@@ -109,9 +109,9 @@ export default function WaypointTimelineBar({
             </React.Fragment>
           ))}
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
-          <span className="px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-300 font-mono text-[11px]">
+          <span className="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 font-mono text-[11px]">
             {finishAction === 'hover' ? 'Hover' : finishAction === 'land_at_last_waypoint' ? '🛬 Land' : '🏠 RTH'}
           </span>
         </div>
@@ -123,14 +123,14 @@ export default function WaypointTimelineBar({
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#162238] hover:bg-[#1C2940] border border-[rgba(148,163,184,0.20)] text-xs text-[#F1F5F9] font-medium transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted border border-border text-xs text-foreground font-medium transition-all"
             title="เปิด/ปิดตารางพิกัด Waypoints"
           >
-            <MapPin className="w-3.5 h-3.5 text-[#06B6D4]" />
+            <MapPin className="w-3.5 h-3.5 text-primary" />
             <span className="font-semibold">
               พิกัด Waypoints ({waypoints.length})
             </span>
-            {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
+            {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />}
           </button>
 
           {/* Drone Bridge Toggle Indicator */}
@@ -138,13 +138,13 @@ export default function WaypointTimelineBar({
             onClick={onToggleBridge}
             className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all ${
               isBridgeConnected
-                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                : 'bg-[#162238] text-slate-400 border-[rgba(148,163,184,0.20)] hover:text-slate-200 hover:bg-[#1C2940]'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 shadow-sm'
+                : 'bg-secondary text-muted-foreground border-border hover:text-foreground hover:bg-muted'
             }`}
             title={isBridgeConnected ? 'คลิกเพื่อตัดการเชื่อมต่อ Drone Bridge' : 'คลิกเพื่อเชื่อมต่อ GeoMonitor Drone Bridge (Android MSDK V5)'}
           >
-            <span className={`w-2 h-2 rounded-full ${isBridgeConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-            <Radio className="w-3.5 h-3.5 text-slate-400" />
+            <span className={`w-2 h-2 rounded-full ${isBridgeConnected ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'}`} />
+            <Radio className="w-3.5 h-3.5 text-muted-foreground" />
             <span>{isBridgeConnected ? 'Bridge: Connected' : 'เชื่อมต่อ Drone Bridge'}</span>
           </button>
         </div>
@@ -167,7 +167,7 @@ export default function WaypointTimelineBar({
           <button
             onClick={onClearRoute}
             disabled={waypoints.length === 0}
-            className="min-h-[36px] px-3 py-1.5 rounded-lg bg-[#162238] hover:bg-rose-950/40 hover:text-rose-400 text-slate-400 text-xs font-medium flex items-center gap-1.5 border border-[rgba(148,163,184,0.20)] transition-all disabled:opacity-40 cursor-pointer"
+            className="min-h-[36px] px-3 py-1.5 rounded-lg bg-secondary hover:bg-destructive/10 hover:text-destructive text-muted-foreground text-xs font-medium flex items-center gap-1.5 border border-border transition-all disabled:opacity-40 cursor-pointer"
             title="ล้างเส้นทางทั้งหมด"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -177,10 +177,10 @@ export default function WaypointTimelineBar({
           {/* Saved Missions */}
           <button
             onClick={onOpenSavedMissions}
-            className="min-h-[36px] px-3 py-1.5 rounded-lg bg-[#162238] hover:bg-[#1C2940] text-[#CBD5E1] hover:text-white text-xs font-medium flex items-center gap-1.5 border border-[rgba(148,163,184,0.20)] transition-all cursor-pointer"
+            className="min-h-[36px] px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 border border-border transition-all cursor-pointer"
             title="เปิดภารกิจที่บันทึกไว้ในระบบ"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-[#06B6D4]" />
+            <FolderOpen className="w-3.5 h-3.5 text-primary" />
             <span>ภารกิจที่บันทึก</span>
           </button>
 
@@ -188,10 +188,10 @@ export default function WaypointTimelineBar({
           <button
             onClick={onSaveMission}
             disabled={isSaving || waypoints.length === 0}
-            className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-[#162238] hover:bg-[#1C2940] text-white text-xs font-semibold flex items-center gap-1.5 border border-[rgba(148,163,184,0.20)] transition-all cursor-pointer disabled:opacity-40"
+            className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-secondary hover:bg-muted text-foreground text-xs font-semibold flex items-center gap-1.5 border border-border transition-all cursor-pointer disabled:opacity-40"
             title="บันทึกภารกิจลงฐานข้อมูลกลาง"
           >
-            <Save className="w-3.5 h-3.5 text-cyan-400" />
+            <Save className="w-3.5 h-3.5 text-primary" />
             <span>{isSaving ? 'กำลังบันทึก...' : 'บันทึก'}</span>
           </button>
 
@@ -201,8 +201,8 @@ export default function WaypointTimelineBar({
             disabled={waypoints.length === 0 || !isBridgeConnected || isUploading || workflowState === 'OUTDATED'}
             className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
               isBridgeConnected && waypoints.length > 0 && workflowState !== 'OUTDATED'
-                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(245,158,11,0.35)] cursor-pointer'
-                : 'bg-[#162238] text-slate-500 border border-[rgba(148,163,184,0.15)] cursor-not-allowed opacity-50'
+                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm cursor-pointer'
+                : 'bg-secondary text-muted-foreground border border-border cursor-not-allowed opacity-50'
             }`}
             title={
               workflowState === 'OUTDATED'
@@ -224,8 +224,8 @@ export default function WaypointTimelineBar({
             disabled={waypoints.length === 0 || workflowState === 'OUTDATED'}
             className={`min-h-[36px] px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
               waypoints.length === 0 || workflowState === 'OUTDATED'
-                ? 'bg-[#162238] text-slate-500 border border-[rgba(148,163,184,0.15)] cursor-not-allowed opacity-40'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)] cursor-pointer'
+                ? 'bg-secondary text-muted-foreground border border-border cursor-not-allowed opacity-40'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm cursor-pointer'
             }`}
             title={
               workflowState === 'OUTDATED'
@@ -243,15 +243,15 @@ export default function WaypointTimelineBar({
 
       {/* 3. Expanded Waypoint Table Drawer */}
       {isExpanded && (
-        <div className="max-h-56 overflow-y-auto p-3 bg-[#080F20]/95 border-t border-[rgba(148,163,184,0.15)] text-xs font-mono">
+        <div className="max-h-56 overflow-y-auto p-3 bg-card border-t border-border text-xs font-mono">
           {waypoints.length === 0 ? (
-            <div className="py-6 text-center text-slate-500 text-xs font-sans">
+            <div className="py-6 text-center text-muted-foreground text-xs font-sans">
               ยังไม่มีเส้นทางบิน กำหนดพื้นที่และกด &quot;คำนวณแผนการบิน (Calculate Flight Plan)&quot;
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-border text-[10px] text-muted-foreground uppercase tracking-wider">
                   <th className="py-1.5 px-2">#</th>
                   <th className="py-1.5 px-2">Latitude (°N)</th>
                   <th className="py-1.5 px-2">Longitude (°E)</th>
@@ -261,30 +261,30 @@ export default function WaypointTimelineBar({
                   <th className="py-1.5 px-2 text-right">เลือก</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-border">
                 {waypoints.map((wp, idx) => (
                   <tr
                     key={idx}
                     onClick={() => onSelectWaypoint(selectedWaypointIndex === idx ? null : idx)}
                     className={`cursor-pointer transition-colors ${
                       selectedWaypointIndex === idx
-                        ? 'bg-cyan-500/20 text-cyan-300 font-bold'
-                        : 'hover:bg-slate-800/50 text-slate-300'
+                        ? 'bg-primary/10 text-primary font-bold'
+                        : 'hover:bg-muted text-foreground'
                     }`}
                   >
-                    <td className="py-1.5 px-2 font-bold text-slate-400">{wp.sequence}</td>
+                    <td className="py-1.5 px-2 font-bold text-muted-foreground">{wp.sequence}</td>
                     <td className="py-1.5 px-2">{wp.latitude.toFixed(6)}</td>
                     <td className="py-1.5 px-2">{wp.longitude.toFixed(6)}</td>
-                    <td className="py-1.5 px-2 text-cyan-400">{wp.altitudeMeters}m</td>
+                    <td className="py-1.5 px-2 text-primary">{wp.altitudeMeters}m</td>
                     <td className="py-1.5 px-2">{wp.speedMps} m/s</td>
                     <td className="py-1.5 px-2">
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
                         {wp.action === 'take_photo' ? '📷 ถ่ายภาพ' : 'ปกติ'}
                       </span>
                     </td>
                     <td className="py-1.5 px-2 text-right">
                       {selectedWaypointIndex === idx && (
-                        <span className="text-[10px] text-cyan-400 font-sans">กำลังเลือก</span>
+                        <span className="text-[10px] text-primary font-sans">กำลังเลือก</span>
                       )}
                     </td>
                   </tr>

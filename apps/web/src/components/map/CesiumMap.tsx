@@ -22,7 +22,16 @@ import {
   LocateFixed,
   MapPin,
 } from 'lucide-react';
-import { formatAreaThai, DroneWaypointDTO, toSignedBearing } from '@geomonitor/shared';
+import {
+  formatAreaThai,
+  DroneWaypointDTO,
+  toSignedBearing,
+  MAP_BEARING,
+  DEFAULT_MAP_CENTER,
+  computeBoundingBox,
+  calculate2DGroundAltitude,
+  getInitial2DCameraTarget,
+} from '@geomonitor/shared';
 import {
   FlightLineSegment,
   PhotoCapturePosition,
@@ -84,6 +93,18 @@ export type DroneInteractionMode =
   | 'set_takeoff'
   | 'set_landing';
 
+export interface DroneMapLayerVisibility {
+  surveyArea?: boolean;       // ขอบเขตแปลงบิน
+  flightLines?: boolean;      // แนวบินโดรน
+  waypoints?: boolean;        // จุด Waypoint
+  photoPositions?: boolean;   // จุดถ่ายภาพ
+  footprints?: boolean;       // กล่องคลุมภาพ
+  markers?: boolean;          // จุด Home / Takeoff / Landing
+  baseMap?: boolean;          // แผนที่ภาพถ่ายดาวเทียม
+  terrain3D?: boolean;        // ภูมิประเทศ 3 มิติ
+  managedAreas?: boolean;     // พื้นที่รับผิดชอบ
+}
+
 export interface CesiumMapProps {
   areas?: AreaFeature[];
   selectedAreaId?: string | null;
@@ -104,6 +125,7 @@ export interface CesiumMapProps {
   droneAltitudeReference?: 'relative_to_home' | 'agl' | 'amsl';
   droneTargetAltitudeM?: number;
   droneInteractionMode?: DroneInteractionMode;
+  droneLayerVisibility?: DroneMapLayerVisibility;
   onDronePolygonChange?: (poly: [number, number][]) => void;
   onDroneHomePointChange?: (pt: [number, number, number]) => void;
   onDroneTakeoffPointChange?: (pt: [number, number, number]) => void;
@@ -111,6 +133,8 @@ export interface CesiumMapProps {
   selectedDroneWaypointIndex?: number | null;
   onSelectDroneWaypoint?: (idx: number | null) => void;
   onUserLocationDetected?: (coords: { longitude: number; latitude: number; accuracy: number }) => void;
+  hasBottomTimeline?: boolean;
+  rightOffsetClass?: string;
 }
 
 export default function CesiumMap({
@@ -138,6 +162,7 @@ export default function CesiumMap({
   droneAltitudeReference = 'relative_to_home',
   droneTargetAltitudeM = 80,
   droneInteractionMode = 'none',
+  droneLayerVisibility = {},
   onDronePolygonChange,
   onDroneHomePointChange,
   onDroneTakeoffPointChange,
@@ -145,6 +170,8 @@ export default function CesiumMap({
   selectedDroneWaypointIndex = null,
   onSelectDroneWaypoint,
   onUserLocationDetected,
+  hasBottomTimeline = false,
+  rightOffsetClass,
 }: CesiumMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
@@ -232,27 +259,56 @@ export default function CesiumMap({
     secondary?: string;
   } | null>(null);
 
-  // 2D / 3D Scene Mode State
-  const [sceneMode, setSceneMode] = useState<'3D' | '2D'>('3D');
+  // 2D / 3D Scene Mode State (Defaults to 2D-First per specification)
+  const [sceneMode, setSceneMode] = useState<'3D' | '2D'>('2D');
 
   // Toggle Layer Callback
   const handleToggleLayer = (key: 'cut' | 'fill' | 'construction' | 'boundary') => {
     setVisibleLayers((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Toggle 2D / 3D Scene Mode
+  // Toggle 2D / 3D Scene Mode with seamless area coordinate preservation
   const handleToggleSceneMode = useCallback(() => {
     const v = viewerRef.current;
     if (!v || v.isDestroyed()) return;
 
+    const carto = v.camera.positionCartographic;
+    const currentLon = (carto && Math.abs(carto.longitude) > 0.001) ? (carto.longitude * 180 / Math.PI) : coords.lon;
+    const currentLat = (carto && Math.abs(carto.latitude) > 0.001) ? (carto.latitude * 180 / Math.PI) : coords.lat;
+    const currentHeight = (carto && carto.height < 50000) ? carto.height : (coords.cameraHeight || 2100);
+
     if (sceneMode === '3D') {
+      const onMorphTo2DComplete = () => {
+        v.scene.morphComplete.removeEventListener(onMorphTo2DComplete);
+        v.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(currentLon, currentLat, currentHeight),
+          orientation: {
+            heading: initialMapBearingRad,
+            pitch: Cesium.Math.toRadians(-89.9),
+            roll: 0,
+          },
+        });
+      };
+      v.scene.morphComplete.addEventListener(onMorphTo2DComplete);
       v.scene.morphTo2D(1.0);
       setSceneMode('2D');
     } else {
+      const onMorphTo3DComplete = () => {
+        v.scene.morphComplete.removeEventListener(onMorphTo3DComplete);
+        v.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(currentLon, currentLat, Math.min(Math.max(currentHeight, 500), 5000)),
+          orientation: {
+            heading: initialMapBearingRad,
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+        });
+      };
+      v.scene.morphComplete.addEventListener(onMorphTo3DComplete);
       v.scene.morphTo3D(1.0);
       setSceneMode('3D');
     }
-  }, [sceneMode]);
+  }, [sceneMode, coords.lon, coords.lat, coords.cameraHeight, initialMapBearingRad]);
 
   // Google Earth Pro Navigation Handlers: Reset to Initial Map Bearing (-90°)
   const handleResetNorth = useCallback(() => {
@@ -343,7 +399,7 @@ export default function CesiumMap({
         Cesium.Ion.defaultAccessToken = ionToken;
       }
 
-      // 2. Initialize Viewer with baseLayer: false to prevent default unauthorized Cesium Ion World Imagery (Asset ID 2) requests
+      // 2. Initialize Viewer in native 2D mode with baseLayer: false to prevent unauthorized Cesium Ion requests
       const viewer = new Cesium.Viewer(containerRef.current, {
         animation: false,
         baseLayerPicker: false,
@@ -357,6 +413,7 @@ export default function CesiumMap({
         timeline: false,
         navigationHelpButton: false,
         scene3DOnly: false,
+        sceneMode: Cesium.SceneMode.SCENE2D,
         terrainProvider: new Cesium.EllipsoidTerrainProvider(),
       });
 
@@ -382,59 +439,90 @@ export default function CesiumMap({
       imageryLayer.alpha = (layerSettings.orthoOpacity ?? 100) / 100;
       imageryLayer.show = layerSettings.orthoVisible !== false;
 
-      // Dynamic Device GPS Detection on Camera Init (Replaces hardcoded Rayong)
+      // 4. Deterministic 2D-First Camera Initialization (Phase 3)
+      // Prioritize: dronePolygon -> selectedArea -> first area -> default system extent
+      let selectedAreaCoords: [number, number][] | undefined;
+      if (selectedAreaId && areas) {
+        const selArea = areas.find((a) => a.id === selectedAreaId);
+        if (selArea?.boundary?.coordinates?.[0] && selArea.boundary.coordinates[0].length >= 3) {
+          selectedAreaCoords = selArea.boundary.coordinates[0] as [number, number][];
+        }
+      }
+
+      const areaList = areas?.map((a) => ({
+        id: a.id,
+        coordinates: a.boundary?.coordinates?.[0] as [number, number][],
+      }));
+
+      const initialTarget = getInitial2DCameraTarget({
+        polygonCoords: dronePolygon && dronePolygon.length >= 3 ? dronePolygon : undefined,
+        selectedAreaCoords,
+        areas: areaList,
+        defaultCenter: DEFAULT_MAP_CENTER,
+      });
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          initialTarget.longitude,
+          initialTarget.latitude,
+          initialTarget.height
+        ),
+        orientation: {
+          heading: initialMapBearingRad,
+          pitch: Cesium.Math.toRadians(-89.9), // Nadir top-down
+          roll: 0,
+        },
+      });
+
+      // Synchronize HUD coordinates immediately to target view
+      setCoords((prev) => ({
+        ...prev,
+        lat: Number(initialTarget.latitude.toFixed(5)),
+        lon: Number(initialTarget.longitude.toFixed(5)),
+        cameraHeight: Math.round(initialTarget.height),
+        heading: Math.round(Cesium.Math.toDegrees(initialMapBearingRad)),
+        pitch: -90,
+      }));
+
+      // Camera movement listener for live HUD synchronization
+      const removeCameraListener = viewer.camera.changed.addEventListener(() => {
+        if (!viewer || viewer.isDestroyed()) return;
+        const carto = viewer.camera.positionCartographic;
+        if (!carto) return;
+
+        const headingDeg = Cesium.defined(viewer.camera.heading)
+          ? Math.round(viewer.camera.heading * (180 / Math.PI))
+          : initialMapBearing;
+        const pitchDeg = Cesium.defined(viewer.camera.pitch)
+          ? Math.round(viewer.camera.pitch * (180 / Math.PI))
+          : -90;
+
+        setCoords((prev) => ({
+          ...prev,
+          lat: Cesium.defined(carto.latitude) ? Number((carto.latitude * (180 / Math.PI)).toFixed(5)) : prev.lat,
+          lon: Cesium.defined(carto.longitude) ? Number((carto.longitude * (180 / Math.PI)).toFixed(5)) : prev.lon,
+          cameraHeight: Cesium.defined(carto.height) ? Math.round(carto.height) : prev.cameraHeight,
+          heading: headingDeg,
+          pitch: pitchDeg,
+        }));
+      });
+
+      // Passive Device GPS Detection in background without moving/overwriting camera
       if (typeof window !== 'undefined' && navigator.geolocation) {
-        setIsLocatingGps(true);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            setIsLocatingGps(false);
             const lon = Number(pos.coords.longitude.toFixed(6));
             const lat = Number(pos.coords.latitude.toFixed(6));
             const accuracy = Math.round(pos.coords.accuracy || 15);
             setUserGps({ lon, lat, accuracy });
             onUserLocationDetected?.({ longitude: lon, latitude: lat, accuracy });
-
-            if (viewer && !viewer.isDestroyed()) {
-              viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 2000),
-                orientation: {
-                  heading: initialMapBearingRad,
-                  pitch: Cesium.Math.toRadians(-45),
-                  roll: 0,
-                },
-                duration: 1.5,
-              });
-            }
+            // Do NOT overwrite camera! Camera stays centered on target area in 2D nadir view.
           },
           (err) => {
-            setIsLocatingGps(false);
-            console.warn('GPS initial detection fallback:', err.message);
-            // Fallback view: Thailand center / Bangkok
-            if (viewer && !viewer.isDestroyed()) {
-              viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(100.5018, 13.7563, 10000),
-                orientation: {
-                  heading: initialMapBearingRad,
-                  pitch: Cesium.Math.toRadians(-50),
-                  roll: 0,
-                },
-                duration: 0,
-              });
-            }
+            console.warn('GPS background detection notice:', err.message);
           },
           { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
         );
-      } else {
-        // Fallback view: Thailand center / Bangkok
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(100.5018, 13.7563, 10000),
-          orientation: {
-            heading: initialMapBearingRad,
-            pitch: Cesium.Math.toRadians(-50),
-            roll: 0,
-          },
-          duration: 0,
-        });
       }
 
       // Mouse Move Listener for Coordinates & Elevation Display
@@ -454,13 +542,20 @@ export default function CesiumMap({
           // Approximate realistic coastal elevation if ellipsoid return is 0
           const groundElev = Math.max(0, Math.round(rawHeight));
 
+          const headingDeg = Cesium.defined(viewer.camera.heading)
+            ? Math.round(viewer.camera.heading * (180 / Math.PI))
+            : initialMapBearing;
+          const pitchDeg = Cesium.defined(viewer.camera.pitch)
+            ? Math.round(viewer.camera.pitch * (180 / Math.PI))
+            : -90;
+
           setCoords({
-            lat: Number(Cesium.Math.toDegrees(cartographic.latitude).toFixed(5)),
-            lon: Number(Cesium.Math.toDegrees(cartographic.longitude).toFixed(5)),
+            lat: Number((cartographic.latitude * (180 / Math.PI)).toFixed(5)),
+            lon: Number((cartographic.longitude * (180 / Math.PI)).toFixed(5)),
             groundElevation: groundElev,
-            cameraHeight: Math.round(viewer.camera.positionCartographic.height),
-            heading: Math.round(Cesium.Math.toDegrees(viewer.camera.heading)),
-            pitch: Math.round(Cesium.Math.toDegrees(viewer.camera.pitch)),
+            cameraHeight: viewer.camera.positionCartographic ? Math.round(viewer.camera.positionCartographic.height) : 2500,
+            heading: headingDeg,
+            pitch: pitchDeg,
           });
         }
       }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -477,8 +572,12 @@ export default function CesiumMap({
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
       viewerRef.current = viewer;
+      if (typeof window !== 'undefined') {
+        (window as any).__cesiumViewer = viewer;
+      }
 
       return () => {
+        removeCameraListener();
         handler.destroy();
         if (!viewer.isDestroyed()) {
           viewer.destroy();
@@ -688,7 +787,7 @@ export default function CesiumMap({
     });
     entitiesToRemove.forEach((e) => viewer.entities.remove(e));
 
-    if (!visibleLayers.boundary) return;
+    if (!visibleLayers.boundary || droneLayerVisibility?.managedAreas === false) return;
 
     areas.forEach((area) => {
       const isSelected = area.id === selectedAreaId;
@@ -743,7 +842,7 @@ export default function CesiumMap({
         },
       });
     });
-  }, [areas, selectedAreaId, visibleLayers.boundary]);
+  }, [areas, selectedAreaId, visibleLayers.boundary, droneLayerVisibility?.managedAreas]);
 
   // Render Change Features (Cut/Fill Extruded 3D Polygons)
   useEffect(() => {
@@ -798,6 +897,58 @@ export default function CesiumMap({
       });
     });
   }, [changeFeatures, visibleLayers]);
+
+  // Zoom to Selected Responsibility Area when selectedAreaId changes
+  const prevSelectedAreaIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed() || !selectedAreaId || !areas) return;
+    if (prevSelectedAreaIdRef.current === selectedAreaId) return;
+    prevSelectedAreaIdRef.current = selectedAreaId;
+
+    const area = areas.find((a) => a.id === selectedAreaId);
+    const coords = area?.boundary?.coordinates?.[0] as [number, number][] | undefined;
+    if (!coords || coords.length < 3) return;
+
+    const bbox = computeBoundingBox(coords);
+    if (bbox) {
+      const altitude = calculate2DGroundAltitude(bbox);
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(bbox.centerLon, bbox.centerLat, altitude),
+        orientation: {
+          heading: initialMapBearingRad,
+          pitch: sceneMode === '2D' ? Cesium.Math.toRadians(-89.9) : Cesium.Math.toRadians(-45),
+          roll: 0,
+        },
+        duration: 1.2,
+      });
+    }
+  }, [selectedAreaId, areas, initialMapBearingRad, sceneMode]);
+
+  // Zoom to Survey Polygon when newly loaded/imported or changed
+  const lastPolygonHashRef = useRef<string>('');
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed() || !dronePolygon || dronePolygon.length < 3) return;
+
+    const currentHash = `${dronePolygon.length}:${dronePolygon[0]?.[0]?.toFixed(5)},${dronePolygon[0]?.[1]?.toFixed(5)}`;
+    if (lastPolygonHashRef.current !== currentHash) {
+      lastPolygonHashRef.current = currentHash;
+      const bbox = computeBoundingBox(dronePolygon);
+      if (bbox) {
+        const altitude = calculate2DGroundAltitude(bbox);
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(bbox.centerLon, bbox.centerLat, altitude),
+          orientation: {
+            heading: initialMapBearingRad,
+            pitch: sceneMode === '2D' ? Cesium.Math.toRadians(-89.9) : Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+          duration: 1.2,
+        });
+      }
+    }
+  }, [dronePolygon, initialMapBearingRad, sceneMode]);
 
   // Handle Saved Camera Views
   useEffect(() => {
@@ -912,7 +1063,7 @@ export default function CesiumMap({
       dronePolygonEntityRef.current = null;
     }
 
-    if (dronePolygon && dronePolygon.length >= 3) {
+    if (droneLayerVisibility?.surveyArea !== false && dronePolygon && dronePolygon.length >= 3) {
       const positions = dronePolygon.map(([lon, lat]) => Cesium.Cartesian3.fromDegrees(lon, lat, 0));
       positions.push(Cesium.Cartesian3.fromDegrees(dronePolygon[0][0], dronePolygon[0][1], 0));
 
@@ -933,7 +1084,7 @@ export default function CesiumMap({
         },
       });
     }
-  }, [dronePolygon]);
+  }, [dronePolygon, droneLayerVisibility?.surveyArea]);
 
   // Render Drone Flight Route, Waypoints & Pins
   useEffect(() => {
@@ -960,7 +1111,7 @@ export default function CesiumMap({
     droneFootprintEntitiesRef.current = [];
 
     // Home Point Marker
-    if (droneHomePoint) {
+    if (droneLayerVisibility?.markers !== false && droneHomePoint) {
       const homeEntity = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(droneHomePoint[0], droneHomePoint[1], droneHomePoint[2] || 0),
         point: {
@@ -986,7 +1137,7 @@ export default function CesiumMap({
     }
 
     // Takeoff Point Marker
-    if (droneTakeoffPoint) {
+    if (droneLayerVisibility?.markers !== false && droneTakeoffPoint) {
       const takeoffEntity = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(droneTakeoffPoint[0], droneTakeoffPoint[1], droneTakeoffPoint[2] || 0),
         point: {
@@ -1012,7 +1163,7 @@ export default function CesiumMap({
     }
 
     // 1. Render Sample Camera Footprint Polygons on Ground (Clamped to Terrain)
-    if (droneSampleFootprints && droneSampleFootprints.length > 0) {
+    if (droneLayerVisibility?.footprints !== false && droneSampleFootprints && droneSampleFootprints.length > 0) {
       droneSampleFootprints.forEach((box) => {
         const flatDegrees = box.corners.flatMap((c) => [c[0], c[1]]);
         const boxOutlinePositions = box.corners.map(([lon, lat]) => Cesium.Cartesian3.fromDegrees(lon, lat, 0));
@@ -1036,7 +1187,7 @@ export default function CesiumMap({
     }
 
     // 2. Render Full Continuous Flight Route Polyline connecting all Waypoints
-    if (droneWaypoints && droneWaypoints.length >= 2) {
+    if (droneLayerVisibility?.flightLines !== false && droneWaypoints && droneWaypoints.length >= 2) {
       const routePositions = droneWaypoints.map((wp) =>
         Cesium.Cartesian3.fromDegrees(wp.longitude, wp.latitude, wp.altitudeMeters || droneTargetAltitudeM || 80)
       );
@@ -1055,7 +1206,7 @@ export default function CesiumMap({
     }
 
     // 2.1 Render Parallel Photogrammetry Flight Lines (Cyan for Pass A, Emerald for Pass B)
-    if (droneFlightLines && droneFlightLines.length > 0) {
+    if (droneLayerVisibility?.flightLines !== false && droneFlightLines && droneFlightLines.length > 0) {
       droneFlightLines.forEach((line) => {
         const isPassB = line.passId === 'B';
         const lineEntity = viewer.entities.add({
@@ -1078,7 +1229,7 @@ export default function CesiumMap({
     }
 
     // 2.2 Transit Polyline from Home to Waypoint 1 and from last Waypoint back to Home/Landing
-    if (droneHomePoint && droneWaypoints && droneWaypoints.length > 0) {
+    if (droneLayerVisibility?.flightLines !== false && droneHomePoint && droneWaypoints && droneWaypoints.length > 0) {
       const homeCartesian = Cesium.Cartesian3.fromDegrees(
         droneHomePoint[0],
         droneHomePoint[1],
@@ -1123,7 +1274,7 @@ export default function CesiumMap({
     }
 
     // 3. Render Photo Capture Trigger Points Along All Flight Lines
-    if (dronePhotoPositions && dronePhotoPositions.length > 0) {
+    if (droneLayerVisibility?.photoPositions !== false && dronePhotoPositions && dronePhotoPositions.length > 0) {
       dronePhotoPositions.forEach((photo) => {
         const photoEntity = viewer.entities.add({
           position: Cesium.Cartesian3.fromDegrees(photo.longitude, photo.latitude, photo.altitudeMeters),
@@ -1152,7 +1303,7 @@ export default function CesiumMap({
     }
 
     // 4. Render Waypoint Numbered Markers at key turning/photo waypoints
-    if (droneWaypoints && droneWaypoints.length > 0) {
+    if (droneLayerVisibility?.waypoints !== false && droneWaypoints && droneWaypoints.length > 0) {
       droneWaypoints.forEach((wp, idx) => {
         const isSelected = selectedDroneWaypointIndex === idx;
         const isKeyWaypoint = idx === 0 || idx === droneWaypoints.length - 1 || idx % 2 === 0;
@@ -1203,6 +1354,7 @@ export default function CesiumMap({
     droneTakeoffPoint,
     droneTargetAltitudeM,
     selectedDroneWaypointIndex,
+    droneLayerVisibility,
   ]);
 
   // Drone Interactive Click & Draw Handler
@@ -1318,7 +1470,7 @@ export default function CesiumMap({
 
       {/* Top Right: Google Earth Pro Navigation Gimbal & GIS Toolbars */}
       <div
-        className="absolute top-4 right-4 z-20 flex flex-col items-end gap-3"
+        className={`absolute top-4 ${rightOffsetClass || 'right-4'} z-20 flex flex-col items-end gap-3 transition-all duration-300`}
         role="toolbar"
         aria-label="ระบบควบคุมแผนที่และเข็มทิศ 3D แบบ Google Earth Pro"
       >
@@ -1335,7 +1487,7 @@ export default function CesiumMap({
         />
 
         {/* Floating GIS Tools Strip (Mode & Measurement) */}
-        <div className="bg-[#101A2D]/95 border border-[rgba(148,163,184,0.25)] rounded-2xl p-1.5 flex items-center gap-1.5 shadow-2xl backdrop-blur-md">
+        <div className="bg-card/95 border border-border rounded-2xl p-1.5 flex items-center gap-1.5 shadow-2xl backdrop-blur-md text-foreground">
           {/* GPS Detect Location Button */}
           <button
             onClick={(e) => {
@@ -1348,19 +1500,19 @@ export default function CesiumMap({
                 : 'ตรวจจับพิกัด GPS ของคอมพิวเตอร์เครื่องนี้ (Locate My Device)'
             }
             aria-label="ตรวจจับตำแหน่ง GPS ของเครื่องคอมพิวเตอร์"
-            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex flex-col items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
               isLocatingGps
-                ? 'bg-[#06B6D4]/30 text-[#06B6D4] animate-pulse'
+                ? 'bg-primary/20 text-primary animate-pulse'
                 : userGps
-                ? 'text-[#06B6D4] bg-[#06B6D4]/15 border border-[#06B6D4]/30'
-                : 'text-[#CBD5E1] hover:text-[#22D3EE] hover:bg-[#162238]'
+                ? 'text-primary bg-primary/10 border border-primary/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             }`}
           >
-            <LocateFixed className={`w-5 h-5 ${isLocatingGps ? 'animate-spin text-[#06B6D4]' : ''}`} />
-            <span className="text-[9px] text-[#94A3B8] font-medium mt-0.5">GPS</span>
+            <LocateFixed className={`w-5 h-5 ${isLocatingGps ? 'animate-spin text-primary' : ''}`} />
+            <span className="text-[9px] text-muted-foreground font-medium mt-0.5">GPS</span>
           </button>
 
-          <div className="w-px h-7 bg-[rgba(148,163,184,0.20)]" />
+          <div className="w-px h-7 bg-border" />
 
           {/* 2D / 3D Mode Toggle */}
           <button
@@ -1370,13 +1522,13 @@ export default function CesiumMap({
             }}
             title={`สลับมุมมอง (ปัจจุบัน: ${sceneMode}) — คลิกเพื่อสลับเป็น ${sceneMode === '3D' ? '2D แบนราบ' : '3D มิติสมจริง'}`}
             aria-label={`สลับมุมมอง 2D หรือ 3D ปัจจุบันคือ ${sceneMode}`}
-            className="w-12 h-12 min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-[#CBD5E1] hover:text-[#22D3EE] hover:bg-[#162238] rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <span className="text-[11px] font-bold font-mono text-[#06B6D4]">{sceneMode}</span>
-            <span className="text-[9px] text-[#94A3B8]">โหมด</span>
+            <span className="text-[11px] font-bold font-mono text-primary">{sceneMode}</span>
+            <span className="text-[9px] text-muted-foreground">โหมด</span>
           </button>
 
-          <div className="w-px h-7 bg-[rgba(148,163,184,0.20)]" />
+          <div className="w-px h-7 bg-border" />
 
           {/* Measure Geodesic Distance */}
           <button
@@ -1392,10 +1544,10 @@ export default function CesiumMap({
             title="วัดระยะทางตามความโค้งผิวโลก (Geodesic Distance) — คลิกจุดบนแผนที่"
             aria-label="วัดระยะทาง"
             aria-pressed={measureMode === 'distance'}
-            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
               measureMode === 'distance'
-                ? 'bg-[#06B6D4] text-[#080F20] font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                : 'text-[#CBD5E1] hover:text-[#22D3EE] hover:bg-[#162238]'
+                ? 'bg-primary text-primary-foreground font-bold shadow-md'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             }`}
           >
             <Ruler className="w-5 h-5" />
@@ -1415,10 +1567,10 @@ export default function CesiumMap({
             title="วัดพื้นที่รูปหลายเหลี่ยมตามทรงรี WGS84 (Spherical Area) — คลิกหลายจุดเพื่อคำนวณ"
             aria-label="วัดพื้นที่รูปหลายเหลี่ยม"
             aria-pressed={measureMode === 'area'}
-            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
               measureMode === 'area'
-                ? 'bg-[#06B6D4] text-[#080F20] font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                : 'text-[#CBD5E1] hover:text-[#22D3EE] hover:bg-[#162238]'
+                ? 'bg-primary text-primary-foreground font-bold shadow-md'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             }`}
           >
             <Shapes className="w-5 h-5" />
@@ -1433,7 +1585,7 @@ export default function CesiumMap({
               }}
               title="ล้างข้อมูลการวัดค่าทั้งหมด"
               aria-label="ล้างข้อมูลการวัดค่าทั้งหมด"
-              className="w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center text-[#F43F5E] hover:bg-[#F43F5E]/20 rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#F43F5E]"
+              className="w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center text-destructive hover:bg-destructive/10 rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-destructive"
             >
               <Trash2 className="w-5 h-5" />
             </button>
@@ -1443,61 +1595,63 @@ export default function CesiumMap({
 
       {/* Measurement Active Result Tooltip */}
       {measurementResult && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-[#101A2D]/95 border border-[#06B6D4]/60 rounded-2xl px-6 py-3 text-xs font-mono shadow-2xl backdrop-blur-md flex flex-col gap-1 items-center animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 text-[#22D3EE] font-bold text-sm">
-            <Crosshair className="w-4 h-4 text-[#06B6D4] animate-spin" />
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-card/95 border border-primary/40 rounded-2xl px-6 py-3 text-xs font-mono shadow-2xl backdrop-blur-md flex flex-col gap-1 items-center animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 text-primary font-bold text-sm">
+            <Crosshair className="w-4 h-4 text-primary animate-spin" />
             <span>{measurementResult.primary}</span>
           </div>
           {measurementResult.secondary && (
-            <div className="text-[11px] text-[#94A3B8]">{measurementResult.secondary}</div>
+            <div className="text-[11px] text-muted-foreground">{measurementResult.secondary}</div>
           )}
         </div>
       )}
 
-      {/* Change Detection Legend (Bottom Right) */}
-      <ChangeLegend visibleLayers={visibleLayers} onToggleLayer={handleToggleLayer} />
+      {/* Change Detection Legend (Bottom Right - only when change detection features exist) */}
+      {changeFeatures && changeFeatures.length > 0 && (
+        <ChangeLegend visibleLayers={visibleLayers} onToggleLayer={handleToggleLayer} />
+      )}
 
-      {/* Real-time Coordinate, Ground Elevation & Spatial Attributes Display (Bottom Left) */}
+      {/* Real-time Coordinate, Ground Elevation & Spatial Attributes Display (Bottom Center - immune to sidebars) */}
       <div
-        className="absolute bottom-4 left-4 z-20 bg-[#101A2D]/95 border border-[rgba(148,163,184,0.25)] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#CBD5E1] flex items-center gap-4 shadow-2xl backdrop-blur-md select-none"
+        className={`absolute ${hasBottomTimeline ? 'bottom-32' : 'bottom-4'} left-1/2 -translate-x-1/2 z-30 bg-card/95 border border-border rounded-2xl px-4 py-2 text-xs font-mono text-foreground flex items-center gap-3.5 shadow-2xl backdrop-blur-md select-none pointer-events-auto transition-all duration-200`}
         role="status"
         aria-label="สถานะพิกัดและความสูงภูมิประเทศปัจจุบัน"
       >
         <div className="flex items-center gap-1.5">
-          <span className="text-[#06B6D4] font-bold">LAT:</span>
-          <span className="text-[#F1F5F9]">{coords.lat.toFixed(5)}° N</span>
+          <span className="text-primary font-bold">LAT:</span>
+          <span className="text-foreground">{coords.lat.toFixed(5)}° N</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5">
-          <span className="text-[#06B6D4] font-bold">LON:</span>
-          <span className="text-[#F1F5F9]">{coords.lon.toFixed(5)}° E</span>
+          <span className="text-primary font-bold">LON:</span>
+          <span className="text-foreground">{coords.lon.toFixed(5)}° E</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5">
-          <span className="text-[#10B981] font-bold" title="ระดับความสูงพื้นผิวภูมิประเทศ (Ground Surface Elevation)">
+          <span className="text-success font-bold" title="ระดับความสูงพื้นผิวภูมิประเทศ (Ground Surface Elevation)">
             TERRAIN:
           </span>
-          <span className="text-[#F1F5F9]">{coords.groundElevation} ม. (MSL)</span>
+          <span className="text-foreground">{coords.groundElevation} ม. (MSL)</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border hidden md:block" />
         <div className="flex items-center gap-1.5 hidden md:flex">
-          <span className="text-[#94A3B8]" title="ระดับความสูงกล้อง (Eye Altitude)">
+          <span className="text-muted-foreground" title="ระดับความสูงกล้อง (Eye Altitude)">
             EYE:
           </span>
-          <span className="text-[#F1F5F9]">{coords.cameraHeight.toLocaleString()} ม.</span>
+          <span className="text-foreground">{coords.cameraHeight.toLocaleString()} ม.</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)] hidden sm:block" />
+        <div className="w-px h-4 bg-border hidden sm:block" />
         <div className="flex items-center gap-1.5 hidden sm:flex">
-          <span className="text-[#94A3B8]">BEARING:</span>
-          <span className="text-[#06B6D4] font-bold">
+          <span className="text-muted-foreground">BEARING:</span>
+          <span className="text-primary font-bold">
             {toSignedBearing(coords.heading) >= 0 ? `+${Math.round(toSignedBearing(coords.heading))}` : Math.round(toSignedBearing(coords.heading))}°
           </span>
-          <span className="text-[#64748B] text-[10px]">({Math.round(((coords.heading % 360) + 360) % 360)}°)</span>
+          <span className="text-muted-foreground text-[10px]">({Math.round(((coords.heading % 360) + 360) % 360)}°)</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)] hidden md:block" />
+        <div className="w-px h-4 bg-border hidden md:block" />
         <div className="flex items-center gap-1.5 hidden md:flex">
-          <span className="text-[#94A3B8]">CRS:</span>
-          <span className="text-[#10B981] font-bold">EPSG:4326 / UTM 47N</span>
+          <span className="text-muted-foreground">CRS:</span>
+          <span className="text-success font-bold">EPSG:4326 / UTM 47N</span>
         </div>
       </div>
     </div>

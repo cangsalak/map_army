@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import Navbar from '@/components/layout/Navbar';
-import LeftSidebar from '@/components/layout/LeftSidebar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Modal, Button } from '@/components/ui/primitives';
 import MissionConfigPanel from '@/components/missions/MissionConfigPanel';
 import MissionValidationPanel from '@/components/missions/MissionValidationPanel';
 import WaypointTimelineBar from '@/components/missions/WaypointTimelineBar';
+import MapLayerControl from '@/components/missions/MapLayerControl';
 import ExportModal from '@/components/missions/ExportModal';
 import ImportKmlModal from '@/components/operations/ImportKmlModal';
 import { LoadingState } from '@/components/common/StateViews';
@@ -33,7 +34,7 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
-import { DroneInteractionMode } from '@/components/map/CesiumMap';
+import { DroneInteractionMode, DroneMapLayerVisibility } from '@/components/map/CesiumMap';
 import { useDeviceLocation, generateDefaultSurveyPolygon } from '@/lib/geolocation';
 
 // Dynamically import the unified CesiumMap with SSR disabled
@@ -134,9 +135,23 @@ export default function DroneMissionPlannerPage() {
     targetPlatform,
   ]);
 
-  // Panels collapse states
+  // Panels collapse states - Right panel collapsed by default for spacious 3D map
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+
+  // Active Planning Step (1: พื้นที่ -> 2: ตั้งค่า -> 3: คำนวณ -> 4: ตรวจสอบ -> 5: ส่งออก)
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
+  // Separate Map Layers Visibility State
+  const [mapLayerVisibility, setMapLayerVisibility] = useState<DroneMapLayerVisibility>({
+    surveyArea: true,
+    flightLines: true,
+    waypoints: true,
+    photoPositions: true,
+    footprints: true,
+    markers: true,
+    managedAreas: true,
+  });
 
   // Interaction Mode
   const [interactionMode, setInteractionMode] = useState<DroneInteractionMode>('none');
@@ -673,136 +688,164 @@ export default function DroneMissionPlannerPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#080F20] text-slate-100 font-sans select-none">
-      {/* 1. Global Command Center Navbar */}
-      <Navbar />
-
-      {/* 1.5. Interactive Workflow Stepper Sub-toolbar */}
-      <div className="h-11 bg-[#101A2D]/95 border-b border-[rgba(148,163,184,0.20)] px-4 flex items-center justify-between gap-3 text-xs z-30 shadow-sm backdrop-blur-md shrink-0 overflow-x-auto scrollbar-none select-none">
+    <DashboardLayout noPadding>
+      {/* 1.5. Interactive Workflow Stepper Sub-toolbar (NextAdmin Style) */}
+      <div className="h-11 bg-card border-b border-border px-4 flex items-center justify-between gap-3 text-xs z-30 shadow-xs shrink-0 overflow-x-auto scrollbar-none select-none">
         <div className="flex items-center gap-1.5 shrink-0">
           {/* STEP 1 */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all ${
-              workflowState === 'EMPTY'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/50 shadow-sm'
+          <button
+            onClick={() => setCurrentStep(1)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              currentStep === 1
+                ? 'bg-primary text-white font-bold shadow-xs border border-primary'
                 : polygon.length >= 3
-                ? 'bg-[#162238] text-slate-300 border border-[rgba(148,163,184,0.20)]'
-                : 'text-slate-500'
+                ? 'bg-card-secondary text-foreground border border-border hover:bg-muted'
+                : 'text-muted-foreground hover:bg-muted/60'
             }`}
           >
             <span
               className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
-                polygon.length >= 3 ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'
+                polygon.length >= 3
+                  ? currentStep === 1
+                    ? 'bg-white text-primary font-bold'
+                    : 'bg-emerald-500 text-white font-bold'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {polygon.length >= 3 ? '✓' : '1'}
             </span>
             <span>1. วาดพื้นที่ (Draw Area)</span>
-          </div>
+          </button>
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
           {/* STEP 2 */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all ${
-              workflowState === 'CONFIGURING' || (polygon.length >= 3 && workflowState === 'READY_TO_CALCULATE')
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/50'
-                : 'bg-[#162238] text-slate-400 border border-[rgba(148,163,184,0.15)]'
+          <button
+            onClick={() => setCurrentStep(2)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              currentStep === 2
+                ? 'bg-primary text-white font-bold shadow-xs border border-primary'
+                : workflowState === 'CONFIGURING' || (polygon.length >= 3 && workflowState === 'READY_TO_CALCULATE')
+                ? 'bg-card-secondary text-foreground border border-border hover:bg-muted'
+                : 'text-muted-foreground hover:bg-muted/60'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] font-mono">
+            <span
+              className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                currentStep === 2 ? 'bg-white text-primary font-bold' : 'bg-muted text-muted-foreground'
+              }`}
+            >
               2
             </span>
             <span>2. ตั้งค่าภารกิจ (Configure)</span>
-          </div>
+          </button>
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
           {/* STEP 3 */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all ${
-              workflowState === 'READY_TO_CALCULATE' || workflowState === 'CALCULATING' || workflowState === 'OUTDATED'
-                ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/50'
+          <button
+            onClick={() => setCurrentStep(3)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              currentStep === 3
+                ? 'bg-primary text-white font-bold shadow-xs border border-primary'
+                : workflowState === 'READY_TO_CALCULATE' || workflowState === 'CALCULATING' || workflowState === 'OUTDATED'
+                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/30'
                 : waypoints.length > 0
-                ? 'bg-[#162238] text-slate-300 border border-[rgba(148,163,184,0.20)]'
-                : 'text-slate-500'
+                ? 'bg-card-secondary text-foreground border border-border hover:bg-muted'
+                : 'text-muted-foreground hover:bg-muted/60'
             }`}
           >
             <span
               className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
                 waypoints.length > 0 && workflowState !== 'OUTDATED'
-                  ? 'bg-emerald-500 text-slate-950 font-bold'
-                  : 'bg-slate-800 text-slate-400'
+                  ? currentStep === 3
+                    ? 'bg-white text-primary font-bold'
+                    : 'bg-emerald-500 text-white font-bold'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {waypoints.length > 0 && workflowState !== 'OUTDATED' ? '✓' : '3'}
             </span>
             <span>3. คำนวณ (Calculate)</span>
-          </div>
+          </button>
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
           {/* STEP 4 */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all ${
-              workflowState === 'CALCULATED' || workflowState === 'EXPORT_READY'
-                ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40'
-                : 'text-slate-500'
+          <button
+            onClick={() => setCurrentStep(4)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              currentStep === 4
+                ? 'bg-primary text-white font-bold shadow-xs border border-primary'
+                : workflowState === 'CALCULATED' || workflowState === 'EXPORT_READY'
+                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30'
+                : 'text-muted-foreground hover:bg-muted/60'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono">
+            <span
+              className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                currentStep === 4 ? 'bg-white text-primary font-bold' : 'bg-muted text-muted-foreground'
+              }`}
+            >
               4
             </span>
             <span>4. ตรวจสอบ (Review)</span>
-          </div>
+          </button>
 
-          <span className="text-slate-600">→</span>
+          <span className="text-muted-foreground">→</span>
 
           {/* STEP 5 */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all ${
-              workflowState === 'EXPORT_READY'
-                ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40'
-                : 'text-slate-500'
+          <button
+            onClick={() => setCurrentStep(5)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              currentStep === 5
+                ? 'bg-primary text-white font-bold shadow-xs border border-primary'
+                : workflowState === 'EXPORT_READY'
+                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30'
+                : 'text-muted-foreground hover:bg-muted/60'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono">
+            <span
+              className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                currentStep === 5 ? 'bg-white text-primary font-bold' : 'bg-muted text-muted-foreground'
+              }`}
+            >
               5
             </span>
             <span>5. ส่งออก (Export)</span>
-          </div>
+          </button>
         </div>
 
         {/* Current State Indicator Badge */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] text-[#94A3B8]">สถานะ:</span>
+          <span className="text-[11px] text-muted-foreground">สถานะ:</span>
           {workflowState === 'EMPTY' && (
-            <span className="px-2.5 py-0.5 rounded-full bg-[#162238] text-slate-400 border border-[rgba(148,163,184,0.20)] font-semibold text-[11px]">
+            <span className="px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-semibold text-[11px]">
               EMPTY (ยังไม่มีขอบเขตพื้นที่)
             </span>
           )}
           {(workflowState === 'AREA_DEFINED' || workflowState === 'READY_TO_CALCULATE') && (
-            <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-semibold text-[11px]">
+            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 font-semibold text-[11px]">
               READY_TO_CALCULATE (พร้อมคำนวณ)
             </span>
           )}
           {workflowState === 'CALCULATING' && (
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/50 font-semibold text-[11px] animate-pulse">
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-semibold text-[11px] animate-pulse">
               CALCULATING (กำลังคำนวณ...)
             </span>
           )}
           {(workflowState === 'CALCULATED' || workflowState === 'EXPORT_READY') && (
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-semibold text-[11px]">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold text-[11px]">
               EXPORT_READY (พร้อมส่งออก)
             </span>
           )}
           {workflowState === 'OUTDATED' && (
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-950/90 text-amber-300 border border-amber-500/60 font-semibold text-[11px] animate-pulse">
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/50 font-semibold text-[11px] animate-pulse">
               ⚠️ OUTDATED (ต้องการคำนวณใหม่)
             </span>
           )}
           {workflowState === 'VALIDATION_FAILED' && (
-            <span className="px-2.5 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/40 font-semibold text-[11px]">
+            <span className="px-2.5 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/30 font-semibold text-[11px]">
               VALIDATION_FAILED (ผิดพลาด)
             </span>
           )}
@@ -820,6 +863,8 @@ export default function DroneMissionPlannerPage() {
           {isLeftPanelOpen && (
             <div className="w-84 2xl:w-96 h-full">
               <MissionConfigPanel
+                currentStep={currentStep}
+                onStepChange={setCurrentStep}
                 name={name}
                 onNameChange={setName}
                 description={description}
@@ -868,6 +913,30 @@ export default function DroneMissionPlannerPage() {
                 workflowState={workflowState}
                 onCalculateFlightPlan={handleCalculateFlightPlan}
                 onOpenImportKml={() => setIsKmlSurveyModalOpen(true)}
+                validationResult={validationResult}
+                totalDistanceM={totalDistanceM}
+                flightTimeSec={flightTimeSec}
+                photoCount={photoCount}
+                surveyAreaM2={surveyAreaM2}
+                batteryCount={batteryCount}
+                batteryMinutes={22}
+                waypoints={waypoints}
+                flightLinesCount={flightLinesCount}
+                detailedEstimates={detailedEstimates}
+                onOpenExportModal={() => setIsExportModalOpen(true)}
+                onSaveMission={handleSaveMission}
+                isSaving={isSaving}
+                isBridgeConnected={isBridgeConnected}
+                onToggleBridge={() => {
+                  const next = !isBridgeConnected;
+                  setIsBridgeConnected(next);
+                  setNotification({
+                    type: 'success',
+                    message: next
+                      ? 'เชื่อมต่อ GeoMonitor Drone Bridge (Android MSDK V5) สำเร็จ'
+                      : 'ตัดการเชื่อมต่อ Drone Bridge เรียบร้อย',
+                  });
+                }}
               />
             </div>
           )}
@@ -875,7 +944,7 @@ export default function DroneMissionPlannerPage() {
           {/* Toggle Left Button */}
           <button
             onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-            className="absolute -right-3.5 top-3 z-30 w-7 h-7 rounded-full bg-[#162238] border border-[rgba(148,163,184,0.30)] text-[#06B6D4] hover:text-white hover:bg-[#1C2940] flex items-center justify-center shadow-lg transition-all"
+            className="absolute -right-3.5 top-3 z-30 w-7 h-7 rounded-full bg-card border border-border text-foreground hover:bg-muted hover:text-primary flex items-center justify-center shadow-md transition-all"
             title={isLeftPanelOpen ? 'ยุบแผงตั้งค่า' : 'ขยายแผงตั้งค่า'}
           >
             {isLeftPanelOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -923,20 +992,20 @@ export default function DroneMissionPlannerPage() {
           )}
 
           {/* Empty State Onboarding Overlay */}
-          {polygon.length === 0 && (
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 px-5 py-3.5 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-slate-800 text-slate-200 shadow-2xl flex items-center gap-3.5 text-xs animate-in fade-in zoom-in-95 duration-200">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center font-bold text-sm">
+          {polygon.length === 0 && currentStep === 1 && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2.5 rounded-2xl bg-card/95 backdrop-blur-md border border-border text-foreground shadow-2xl flex items-center gap-3 text-xs animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-7 h-7 rounded-xl bg-primary/15 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs">
                 1
               </div>
               <div>
-                <div className="font-bold text-white">เริ่มต้นวางแผนภารกิจ (Step 1: Draw Survey Area)</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
-                  คลิกปุ่ม <span className="text-cyan-400 font-semibold">&quot;วาดพื้นที่บิน&quot;</span> ในแผงซ้าย เพื่อกำหนดขอบเขตแปลงสำรวจบนแผนที่ 3D หรือเลือกแปลงจากโครงการ
+                <div className="font-bold text-foreground">ขั้นตอนที่ 1: กำหนดพื้นที่บิน (Draw Survey Area)</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  คลิกปุ่ม <span className="text-primary font-semibold">&quot;วาดพื้นที่บิน&quot;</span> ในแผงซ้าย เพื่อกำหนดขอบเขตแปลงสำรวจบนแผนที่ 3D
                 </div>
               </div>
               <button
                 onClick={() => setInteractionMode('draw_polygon')}
-                className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-all shadow-md ml-2 cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs transition-all shadow-md ml-2 cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>เริ่มวาด Polygon</span>
@@ -946,6 +1015,18 @@ export default function DroneMissionPlannerPage() {
 
           {/* 3D Map Canvas - Using unified CesiumMap across the entire project */}
           <div className="flex-1 relative">
+            {/* Dedicated Map Layers Controller */}
+            <div className="absolute top-4 left-12 z-20">
+              <MapLayerControl
+                visibility={mapLayerVisibility}
+                onChange={setMapLayerVisibility}
+                flightLinesCount={flightLinesCount}
+                photoCount={photoCount}
+                waypointsCount={waypoints.length}
+                hasPolygon={polygon.length >= 3}
+              />
+            </div>
+
             <CesiumMap
               areas={areas}
               dronePolygon={polygon}
@@ -959,6 +1040,7 @@ export default function DroneMissionPlannerPage() {
               droneAltitudeReference={altitudeReference}
               droneTargetAltitudeM={targetAltitudeM}
               droneInteractionMode={interactionMode}
+              droneLayerVisibility={mapLayerVisibility}
               onDronePolygonChange={handlePolygonChange}
               onDroneHomePointChange={setHomePoint}
               onDroneTakeoffPointChange={setTakeoffPoint}
@@ -1011,7 +1093,7 @@ export default function DroneMissionPlannerPage() {
           {/* Toggle Right Button */}
           <button
             onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-            className="absolute -left-3.5 top-3 z-30 w-7 h-7 rounded-full bg-[#162238] border border-[rgba(148,163,184,0.30)] text-[#10B981] hover:text-white hover:bg-[#1C2940] flex items-center justify-center shadow-lg transition-all"
+            className="absolute -left-3.5 top-3 z-30 w-7 h-7 rounded-full bg-card border border-border text-foreground hover:bg-muted hover:text-primary flex items-center justify-center shadow-md transition-all"
             title={isRightPanelOpen ? 'ยุบแผงตรวจสอบ' : 'ขยายแผงตรวจสอบ'}
           >
             {isRightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -1067,56 +1149,47 @@ export default function DroneMissionPlannerPage() {
         }}
       />
 
-      {/* Saved Missions Drawer / Modal */}
+      {/* Saved Missions Modal */}
       {isSavedMissionsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 select-none">
-          <div className="bg-[#101A2D] border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-sm font-bold text-white">ภารกิจการบินที่บันทึกไว้ ({savedMissions.length})</h3>
+        <Modal
+          isOpen={isSavedMissionsOpen}
+          onClose={() => setIsSavedMissionsOpen(false)}
+          title={`ภารกิจการบินที่บันทึกไว้ (${savedMissions.length})`}
+          description="รายการภารกิจสำรวจที่ผ่านการบันทึกลงฐานข้อมูลแล้ว"
+          maxWidth="lg"
+        >
+          <div className="max-h-96 overflow-y-auto space-y-2 text-xs">
+            {savedMissions.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                ยังไม่มีภารกิจที่บันทึกในระบบ
               </div>
-              <button
-                onClick={() => setIsSavedMissionsOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 max-h-96 overflow-y-auto space-y-2 text-xs">
-              {savedMissions.length === 0 ? (
-                <div className="py-8 text-center text-slate-500">
-                  ยังไม่มีภารกิจที่บันทึกในระบบ
-                </div>
-              ) : (
-                savedMissions.map((m) => (
-                  <div
-                    key={m.id}
-                    onClick={() => handleLoadSavedMission(m.id)}
-                    className="p-3 bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 rounded-xl cursor-pointer transition-all flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-white group-hover:text-cyan-400 transition-colors">
-                        {m.name}
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        {m.droneModel} • {m.targetAltitudeM}m ({m.altitudeReference}) • {m.waypointCount} จุด
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-1">
-                        เวอร์ชัน v{m.version || 1} • {new Date(m.updatedAt || m.createdAt).toLocaleString('th-TH')}
-                      </div>
+            ) : (
+              savedMissions.map((m) => (
+                <div
+                  key={m.id}
+                  onClick={() => handleLoadSavedMission(m.id)}
+                  className="p-3 bg-card-secondary hover:bg-muted border border-border rounded-xl cursor-pointer transition-all flex items-center justify-between group"
+                >
+                  <div>
+                    <div className="font-bold text-foreground group-hover:text-primary transition-colors">
+                      {m.name}
                     </div>
-                    <span className="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 font-semibold text-[11px] border border-cyan-500/40">
-                      โหลด
-                    </span>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {m.droneModel} • {m.targetAltitudeM}m ({m.altitudeReference}) • {m.waypointCount} จุด
+                    </div>
+                    <div className="text-[10px] text-muted-foreground/80 font-mono mt-1">
+                      เวอร์ชัน v{m.version || 1} • {new Date(m.updatedAt || m.createdAt).toLocaleString('th-TH')}
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <Button variant="primary" size="sm">
+                    โหลด
+                  </Button>
+                </div>
+              ))
+            )}
           </div>
-        </div>
+        </Modal>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

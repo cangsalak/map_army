@@ -28,6 +28,11 @@ import {
   SymbolCatalogDTO,
   FeatureStyle,
   toSignedBearing,
+  MAP_BEARING,
+  DEFAULT_MAP_CENTER,
+  computeBoundingBox,
+  calculate2DGroundAltitude,
+  getInitial2DCameraTarget,
 } from '@geomonitor/shared';
 import { DrawingTool } from './DrawingToolbar';
 import { getSymbolSvgDataUrl } from './SymbolIcon';
@@ -77,7 +82,7 @@ export default function OperationsMap({
   onCancelFeatureDrawing,
   simulatedPositions = [],
   currentSimTime,
-  mapMode2D = false,
+  mapMode2D = true,
   flyToCoords = null,
 }: OperationsMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -199,56 +204,97 @@ export default function OperationsMap({
       viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
       viewerRef.current = viewer;
+      if (typeof window !== 'undefined') {
+        (window as any).__cesiumViewer = viewer;
+      }
 
       // Mouse Move Tracking for HUD
       const mouseHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       mouseHandler.setInputAction((movement: any) => {
         const pt = pickCoordinates(movement.endPosition);
         if (pt) {
+          const headingDeg = Cesium.defined(viewer.camera.heading)
+            ? Math.round(viewer.camera.heading * (180 / Math.PI))
+            : initialMapBearing;
+          const pitchDeg = Cesium.defined(viewer.camera.pitch)
+            ? Math.round(viewer.camera.pitch * (180 / Math.PI))
+            : -90;
+
           setCoords({
             lat: pt.lat,
             lon: pt.lon,
-            height: Math.round(viewer.camera.positionCartographic.height),
-            heading: Math.round(Cesium.Math.toDegrees(viewer.camera.heading)),
-            pitch: Math.round(Cesium.Math.toDegrees(viewer.camera.pitch)),
+            height: viewer.camera.positionCartographic ? Math.round(viewer.camera.positionCartographic.height) : 1000,
+            heading: headingDeg,
+            pitch: pitchDeg,
           });
         }
       }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-      // Dynamic GPS Detection on map load (Replaces hardcoded Rayong)
+      // Deterministic 2D-First Camera Initialization (Phase 3)
+      const initialTarget = getInitial2DCameraTarget({
+        defaultCenter: DEFAULT_MAP_CENTER,
+      });
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          initialTarget.longitude,
+          initialTarget.latitude,
+          initialTarget.height
+        ),
+        orientation: {
+          heading: initialMapBearingRad,
+          pitch: Cesium.Math.toRadians(-89.9), // Strict 2D nadir
+          roll: 0.0,
+        },
+      });
+
+      // Synchronize HUD coordinates immediately to initial target view
+      setCoords({
+        lat: Number(initialTarget.latitude.toFixed(5)),
+        lon: Number(initialTarget.longitude.toFixed(5)),
+        height: Math.round(initialTarget.height),
+        heading: Math.round(initialMapBearingRad * (180 / Math.PI)),
+        pitch: -90,
+      });
+
+      // Camera movement listener for continuous HUD synchronization
+      const removeCameraListener = viewer.camera.changed.addEventListener(() => {
+        if (!viewer || viewer.isDestroyed()) return;
+        const carto = viewer.camera.positionCartographic;
+        if (!carto) return;
+
+        const headingDeg = Cesium.defined(viewer.camera.heading)
+          ? Math.round(viewer.camera.heading * (180 / Math.PI))
+          : initialMapBearing;
+        const pitchDeg = Cesium.defined(viewer.camera.pitch)
+          ? Math.round(viewer.camera.pitch * (180 / Math.PI))
+          : -90;
+
+        setCoords((prev) => ({
+          ...prev,
+          lat: Cesium.defined(carto.latitude) ? Number((carto.latitude * (180 / Math.PI)).toFixed(5)) : prev.lat,
+          lon: Cesium.defined(carto.longitude) ? Number((carto.longitude * (180 / Math.PI)).toFixed(5)) : prev.lon,
+          height: Cesium.defined(carto.height) ? Math.round(carto.height) : prev.height,
+          heading: headingDeg,
+          pitch: pitchDeg,
+        }));
+      });
+
+      // Passive GPS Detection in background without moving/overwriting camera
       getDeviceLocation()
         .then((loc) => {
           const lon = Number(loc.longitude.toFixed(6));
           const lat = Number(loc.latitude.toFixed(6));
           const accuracy = Math.round(loc.accuracy || 15);
           setUserGps({ lon, lat, accuracy });
-          if (viewer && !viewer.isDestroyed()) {
-            viewer.camera.flyTo({
-              destination: Cesium.Cartesian3.fromDegrees(lon, lat, 2000),
-              orientation: {
-                heading: initialMapBearingRad,
-                pitch: Cesium.Math.toRadians(-45),
-                roll: 0.0,
-              },
-              duration: 1.5,
-            });
-          }
+          // Camera remains locked to target area in 2D nadir view.
         })
         .catch(() => {
-          if (viewer && !viewer.isDestroyed()) {
-            viewer.camera.flyTo({
-              destination: Cesium.Cartesian3.fromDegrees(100.5018, 13.7563, 10000),
-              orientation: {
-                heading: initialMapBearingRad,
-                pitch: Cesium.Math.toRadians(-50),
-                roll: 0.0,
-              },
-              duration: 0,
-            });
-          }
+          // Passive notice
         });
 
       return () => {
+        removeCameraListener();
         mouseHandler.destroy();
         if (viewerRef.current && !viewerRef.current.isDestroyed()) {
           viewerRef.current.destroy();
@@ -258,19 +304,53 @@ export default function OperationsMap({
     } catch (e) {
       console.error('[Cesium Init Error]', e);
     }
-  }, [mapMode2D, pickCoordinates]);
+  }, []);
 
-  // 2. Toggle 2D / 3D Mode
+  // 2. Toggle 2D / 3D Mode with position preservation
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return;
 
+    const carto = viewer.camera.positionCartographic;
+    const currentLon = (carto && Math.abs(carto.longitude) > 0.001) ? (carto.longitude * 180 / Math.PI) : coords.lon;
+    const currentLat = (carto && Math.abs(carto.latitude) > 0.001) ? (carto.latitude * 180 / Math.PI) : coords.lat;
+    const currentHeight = (carto && carto.height < 50000) ? carto.height : (coords.height || 2100);
+
     if (mapMode2D) {
+      const onMorphTo2DComplete = () => {
+        viewer.scene.morphComplete.removeEventListener(onMorphTo2DComplete);
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(currentLon, currentLat, currentHeight),
+          orientation: {
+            heading: initialMapBearingRad,
+            pitch: Cesium.Math.toRadians(-89.9),
+            roll: 0,
+          },
+        });
+      };
+      viewer.scene.morphComplete.addEventListener(onMorphTo2DComplete);
       viewer.scene.morphTo2D(1.0);
     } else {
+      const onMorphTo3DComplete = () => {
+        viewer.scene.morphComplete.removeEventListener(onMorphTo3DComplete);
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(currentLon, currentLat, Math.min(Math.max(currentHeight, 500), 5000)),
+          orientation: {
+            heading: initialMapBearingRad,
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+        });
+      };
+      viewer.scene.morphComplete.addEventListener(onMorphTo3DComplete);
       viewer.scene.morphTo3D(1.0);
     }
-  }, [mapMode2D]);
+  }, [mapMode2D, coords.lon, coords.lat, coords.height, initialMapBearingRad]);
 
   // 2.1 Smooth Camera Fly-To when flyToCoords changes
   useEffect(() => {
@@ -995,7 +1075,7 @@ export default function OperationsMap({
         />
 
         {/* Floating Tools Strip: Locate GPS */}
-        <div className="bg-[#101A2D]/95 border border-[rgba(148,163,184,0.25)] rounded-2xl p-1.5 flex items-center shadow-2xl backdrop-blur-md">
+        <div className="bg-card/95 border border-border rounded-2xl p-1.5 flex items-center shadow-2xl backdrop-blur-md text-foreground">
           <button
             onClick={async () => {
               if (viewerRef.current) {
@@ -1017,45 +1097,45 @@ export default function OperationsMap({
             }}
             title={userGps ? `GPS คอมพิวเตอร์: ${userGps.lat.toFixed(5)}, ${userGps.lon.toFixed(5)}` : 'ตรวจจับพิกัด GPS คอมพิวเตอร์'}
             aria-label="ตรวจจับพิกัด GPS คอมพิวเตอร์"
-            className="w-10 h-10 flex flex-col items-center justify-center rounded-xl text-[#CBD5E1] hover:text-[#22D3EE] hover:bg-[#162238] transition-all cursor-pointer"
+            className="w-10 h-10 flex flex-col items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all cursor-pointer"
           >
-            <LocateFixed className="w-5 h-5 text-[#06B6D4]" />
+            <LocateFixed className="w-5 h-5 text-primary" />
           </button>
         </div>
       </div>
 
       {/* Coordinate & Altitude HUD (Bottom Left) */}
-      <div className="absolute bottom-6 left-4 z-20 bg-[#101A2D]/95 border border-[rgba(148,163,184,0.25)] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#CBD5E1] shadow-2xl backdrop-blur-md flex items-center gap-4 select-none">
+      <div className="absolute bottom-6 left-4 z-20 bg-card/95 border border-border rounded-2xl px-4 py-2.5 text-xs font-mono text-foreground shadow-2xl backdrop-blur-md flex items-center gap-4 select-none">
         <div className="flex items-center gap-1.5">
-          <span className="text-[#06B6D4] font-bold">LAT:</span>
-          <span className="text-[#F1F5F9]">{coords.lat.toFixed(5)}°N</span>
+          <span className="text-primary font-bold">LAT:</span>
+          <span className="text-foreground">{coords.lat.toFixed(5)}°N</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5">
-          <span className="text-[#06B6D4] font-bold">LON:</span>
-          <span className="text-[#F1F5F9]">{coords.lon.toFixed(5)}°E</span>
+          <span className="text-primary font-bold">LON:</span>
+          <span className="text-foreground">{coords.lon.toFixed(5)}°E</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5">
-          <span className="text-[#10B981] font-bold">EYE:</span>
-          <span className="text-[#F1F5F9]">{coords.height.toLocaleString()} ม.</span>
+          <span className="text-success font-bold">EYE:</span>
+          <span className="text-foreground">{coords.height.toLocaleString()} ม.</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5 hidden sm:flex">
-          <span className="text-[#94A3B8]">BEARING:</span>
-          <span className="text-[#06B6D4] font-bold">
+          <span className="text-muted-foreground">BEARING:</span>
+          <span className="text-primary font-bold">
             {toSignedBearing(coords.heading) >= 0 ? `+${Math.round(toSignedBearing(coords.heading))}` : Math.round(toSignedBearing(coords.heading))}°
           </span>
-          <span className="text-[#64748B] text-[10px]">({Math.round(((coords.heading % 360) + 360) % 360)}°)</span>
+          <span className="text-muted-foreground/80 text-[10px]">({Math.round(((coords.heading % 360) + 360) % 360)}°)</span>
         </div>
-        <div className="w-px h-4 bg-[rgba(148,163,184,0.20)]" />
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5 hidden md:flex">
-          <span className="text-[#94A3B8]">CRS:</span>
-          <span className="text-[#10B981] font-bold">EPSG:4326 / UTM 47N</span>
+          <span className="text-muted-foreground">CRS:</span>
+          <span className="text-success font-bold">EPSG:4326 / UTM 47N</span>
         </div>
         {activeTool !== 'none' && (
-          <div className="px-2.5 py-1 rounded-xl bg-[#06B6D4]/20 text-[#22D3EE] text-xs font-semibold flex items-center gap-1.5 border border-[#06B6D4]/40">
-            <span className="w-2 h-2 rounded-full bg-[#06B6D4] animate-pulse" />
+          <div className="px-2.5 py-1 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-1.5 border border-primary/30">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             โหมดวาด: {activeTool.toUpperCase()}
           </div>
         )}

@@ -63,15 +63,15 @@ export default function DrawingToolbar({
   return (
     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-auto">
       {/* Main Drawing Tools Strip */}
-      <div className="bg-navy-900/90 backdrop-blur-md border border-cyan-500/30 rounded-xl p-1.5 flex items-center gap-1 shadow-2xl shadow-black/50">
+      <div className="bg-card/95 backdrop-blur-md border border-border rounded-xl p-1.5 flex items-center gap-1 shadow-xl text-foreground">
         {/* Open Symbol Library button */}
         <button
           onClick={onOpenSymbolLibrary}
           disabled={isLayerReadOnly}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
             activeTool === 'symbol'
-              ? 'bg-cyan-500 text-navy-950 shadow-md shadow-cyan-500/30'
-              : 'bg-navy-950 text-cyan-300 hover:bg-navy-800 border border-cyan-500/30'
+              ? 'bg-primary text-white shadow-sm'
+              : 'bg-card-secondary text-primary hover:bg-muted border border-border'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="เปิดคลังสัญลักษณ์ยุทธวิธีและแผนที่"
         >
@@ -79,7 +79,7 @@ export default function DrawingToolbar({
           <span>{selectedSymbolName ? `สัญลักษณ์: ${selectedSymbolName}` : 'คลังสัญลักษณ์'}</span>
         </button>
 
-        <div className="w-[1px] h-6 bg-navy-700 mx-1" />
+        <div className="w-[1px] h-6 bg-border mx-1" />
 
         {/* Vector Drawing Tools */}
         <button
@@ -87,8 +87,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'point'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="จุดมาร์กเกอร์ (Point Marker)"
         >
@@ -100,8 +100,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'polyline'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="เส้นทาง / เส้นต่อจุด (Polyline)"
         >
@@ -113,8 +113,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'polygon'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="รูปหลายเหลี่ยม / ขอบเขตพื้นที่ (Polygon)"
         >
@@ -126,8 +126,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'rectangle'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="สี่เหลี่ยมผืนผ้า (Rectangle)"
         >
@@ -139,8 +139,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'circle'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="วงกลม / รัศมีปฏิบัติการ (Circle)"
         >
@@ -152,8 +152,8 @@ export default function DrawingToolbar({
           disabled={isLayerReadOnly}
           className={`p-2 rounded-lg text-xs transition-colors ${
             activeTool === 'text'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
-              : 'text-slate-300 hover:text-white hover:bg-navy-800'
+              ? 'bg-primary/10 text-primary border border-primary/30 font-bold'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           } ${isLayerReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           title="ข้อความกำกับแผนที่ (Text Annotation)"
         >
@@ -163,12 +163,12 @@ export default function DrawingToolbar({
         {/* Finish / Cancel when drawing */}
         {isDrawing && (
           <>
-            <div className="w-[1px] h-6 bg-navy-700 mx-1" />
+            <div className="w-[1px] h-6 bg-border mx-1" />
 
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              className="p-2 text-slate-300 hover:text-white disabled:opacity-30 rounded-lg hover:bg-navy-800 transition-colors"
+              className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-lg hover:bg-muted transition-colors cursor-pointer"
               title="เลิกทำจุดล่าสุด (Undo Vertex)"
             >
               <Undo2 className="w-4 h-4" />
@@ -177,7 +177,7 @@ export default function DrawingToolbar({
             <button
               onClick={onRedo}
               disabled={!canRedo}
-              className="p-2 text-slate-300 hover:text-white disabled:opacity-30 rounded-lg hover:bg-navy-800 transition-colors"
+              className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-lg hover:bg-muted transition-colors cursor-pointer"
               title="ทำซ้ำ (Redo)"
             >
               <Redo2 className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default function DrawingToolbar({
                 (activeTool === 'polyline' && vertexCount < 2) ||
                 (activeTool === 'polygon' && vertexCount < 3)
               }
-              className="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-bold text-xs rounded-lg flex items-center gap-1 shadow-md shadow-emerald-500/20 disabled:opacity-40 transition-all"
+              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center gap-1 shadow-sm disabled:opacity-40 transition-all cursor-pointer"
               title="เสร็จสิ้นการวาด"
             >
               <Check className="w-4 h-4" />
@@ -198,7 +198,7 @@ export default function DrawingToolbar({
 
             <button
               onClick={onCancelDrawing}
-              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-navy-800 rounded-lg transition-colors"
+              className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
               title="ยกเลิกการวาด (Esc)"
             >
               <X className="w-4 h-4" />
@@ -209,8 +209,8 @@ export default function DrawingToolbar({
 
       {/* Floating Status & Guidance Banner */}
       {isDrawing ? (
-        <div className="bg-navy-950/95 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-xs text-cyan-300 shadow-lg flex items-center gap-2 animate-fadeIn">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+        <div className="bg-card/95 border border-border rounded-xl px-3 py-1.5 text-xs text-foreground shadow-lg flex items-center gap-2 animate-fadeIn">
+          <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
           <span>
             {activeTool === 'symbol' &&
               `คลิกบนแผนที่เพื่อวางสัญลักษณ์ "${selectedSymbolName || 'ที่เลือก'}" (กด Esc เพื่อยกเลิก)`}
@@ -225,13 +225,13 @@ export default function DrawingToolbar({
           </span>
         </div>
       ) : isLayerReadOnly ? (
-        <div className="bg-amber-950/90 border border-amber-500/40 rounded-lg px-3 py-1.5 text-xs text-amber-300 shadow-md">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs text-amber-800 dark:text-amber-200 shadow-xs">
           ⚠️ ชั้นข้อมูล &quot;{activeLayerName}&quot; เป็นแบบอ่านอย่างเดียว ไม่อนุญาตให้วาดหรือวางสัญลักษณ์
         </div>
       ) : activeLayerName ? (
-        <div className="bg-navy-950/80 border border-navy-800 rounded-lg px-2.5 py-1 text-[11px] text-slate-400 shadow-sm flex items-center gap-1.5">
+        <div className="bg-card/95 border border-border rounded-xl px-3 py-1 text-[11px] text-muted-foreground shadow-xs flex items-center gap-1.5">
           <span>บันทึกลงชั้นข้อมูล:</span>
-          <span className="font-semibold text-cyan-400">{activeLayerName}</span>
+          <span className="font-semibold text-primary">{activeLayerName}</span>
         </div>
       ) : null}
     </div>

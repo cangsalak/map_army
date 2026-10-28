@@ -145,3 +145,33 @@
   - ห้ามอ้างว่าโดรนทุกลำสามารถบินอัตโนมัติได้หากอุปกรณ์ปลายทางไม่รองรับ
 - **ผลกระทบ**:
   - ผู้ใช้งานและนักบินเข้าใจข้อจำกัดของอุปกรณ์ตนเองอย่างถูกต้อง ป้องกันความผิดพลาดหน้างาน
+
+---
+
+## ADR-008: สถาปัตยกรรม Shared Map 2D-First & Ground-Level Camera Initialization
+
+- **สถานะ**: ACCEPTED
+- **วันที่**: 2026-10-28
+- **บริบท**:
+  - ก่อนหน้านี้เมื่อเปิดหน้าใหม่หรือรีโหลดหน้าเว็บ กล้อง 3D อาจลอยเคว้งคว้างกลางอวกาศ (Altitude > 30,000 กม.) หรือหันไปยังตำแหน่งพิกัดที่ไม่เกี่ยวข้อง
+  - มี Race Condition จากการเรียก `navigator.geolocation.getCurrentPosition()` ที่ทำงานแบบอะซิงโครนัสแล้วสั่ง `flyTo` ทับพิกัดพื้นที่ปฏิบัติการจริงหลังจากโหลดเสร็จ 1-2 วินาที
+  - แต่ละโมดูล (Command Center, Drone Mission Planner, Operations Field GIS) มีการจัดการ Camera State แยกจากกัน ทำให้มุมมองกล้องหลุดเมื่อสลับหน้า
+- **การตัดสินใจ**:
+  1. **สถาปัตยกรรม 2D-First แบบรวมศูนย์**:
+     - กำหนดให้ทุกโมดูลเริ่มต้นด้วยโหมด 2D Top-Down Nadir (`sceneMode: Cesium.SceneMode.SCENE2D`, `pitch: -90°`, `heading: 270° / -90°`) เป็นค่าเริ่มต้น
+     - พัฒนาไลบรารีคำนวณตำแหน่งกล้อง `packages/shared/src/gis/camera-controller.ts` ประกอบด้วยฟังก์ชัน:
+       - `computeBoundingBox`: คำนวณ Bounding Box ของพื้นที่รูปปิด
+       - `calculate2DGroundAltitude`: คำนวณความสูงกล้อง 2D ที่เหมาะสมกับขนาดพื้นที่และ Viewport พร้อม Padding 25% ป้องกันขอบล้น
+       - `getInitial2DCameraTarget`: กำหนดเป้าหมายกล้องตามลำดับความสำคัญ (Survey Polygon > Selected Area > First Project Area > Default Center `100.5018, 13.7563`)
+       - `validateCameraState`: ตรวจสอบความถูกต้องของพิกัดก่อน Restore State ป้องกันพิกัดผิดเพี้ยน
+  2. **Passive Geolocation**:
+     - เปลี่ยนการตรวจจับ GPS ของอุปกรณ์เมื่อโหลดหน้าให้เป็นแบบ Passive โดยบันทึกเฉพาะค่าลง `userGps` State เพื่อรอให้ผู้ใช้กดปุ่ม "ตำแหน่งของฉัน" อย่างชัดเจน และห้ามสั่ง `camera.flyTo` เขียนทับพื้นที่ปฏิบัติการโดยอัตโนมัติ
+  3. **Event-Driven 2D/3D Mode Transition**:
+     - ใช้ `viewer.scene.morphComplete` ในการดักจับจังหวะที่การแปลง Scene Mode เสร็จสมบูรณ์ เพื่อตั้งพิกัดกล้องให้อยู่ตรงกึ่งกลางพื้นที่เดิมอย่างแม่นยำ ไม่หลุดพิกัดไป `(0, 0)` หรืออวกาศ
+  4. **Shared Map Context**:
+     - สร้าง `SharedMapProvider` (`apps/web/src/lib/map-context.tsx`) เพื่อแชร์ Camera State และ Area Selection ข้าม Route
+- **ผลกระทบ**:
+  - แผนที่เปิดขึ้นมาอยู่ในระดับสายตาภาคพื้นดิน (Ground Level) ครอบคลุมพื้นที่ปฏิบัติการจริงทันที
+  - กล้องไม่ลอยเคว้งคว้างหรือเปลี่ยนตำแหน่งโดยไม่ตั้งใจ
+  - คงมาตรฐาน Map Bearing (-90° / 270°) และระบบพิกัด WGS84 / EPSG:4326 ตามข้อกำหนดแม่บท
+

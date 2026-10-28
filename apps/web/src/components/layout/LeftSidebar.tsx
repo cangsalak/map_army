@@ -144,21 +144,21 @@ export default function LeftSidebar({
   if (isCollapsed) {
     return (
       <aside
-        className="w-14 bg-[#101A2D]/95 border-r border-[rgba(148,163,184,0.20)] flex flex-col items-center py-2 justify-between h-[calc(100vh-4rem)] select-none z-20 backdrop-blur-md transition-all duration-200 shadow-xl"
+        className="w-14 bg-card/95 border-r border-border text-foreground flex flex-col items-center py-2 justify-between h-full select-none z-20 backdrop-blur-md transition-all duration-200 shadow-xl"
         aria-label="แถบควบคุมด้านซ้ายแบบย่อ"
       >
         <div className="flex flex-col items-center gap-2 w-full">
           {/* Expand Button (44x44px target) */}
           <button
             onClick={() => setIsCollapsed(false)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-[#162238] text-[#06B6D4] hover:text-white hover:bg-[#1C2940] border border-[rgba(148,163,184,0.20)] shadow-sm focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none transition-all"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-card-secondary text-primary hover:text-foreground hover:bg-muted border border-border shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none transition-all cursor-pointer"
             title="ขยายแถบเครื่องมือด้านซ้าย"
             aria-label="ขยายแถบเครื่องมือด้านซ้าย"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          <div className="w-8 h-[1px] bg-[rgba(148,163,184,0.20)] my-1" />
+          <div className="w-8 h-[1px] bg-border my-1" />
 
           {/* Tab 0: System Navigation Menu */}
           <button
@@ -166,10 +166,10 @@ export default function LeftSidebar({
               setActiveTab('menu');
               setIsCollapsed(false);
             }}
-            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
               activeTab === 'menu'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                : 'text-[#94A3B8] hover:text-white hover:bg-[#162238]'
+                ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             title="เมนูระบบหลัก (Main Navigation)"
             aria-label="เมนูระบบหลัก"
@@ -183,10 +183,10 @@ export default function LeftSidebar({
               setActiveTab('areas');
               setIsCollapsed(false);
             }}
-            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
               activeTab === 'areas'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                : 'text-[#94A3B8] hover:text-white hover:bg-[#162238]'
+                ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             title="พื้นที่ในการดูแล (Areas)"
             aria-label="พื้นที่ในการดูแล"
@@ -200,10 +200,10 @@ export default function LeftSidebar({
               setActiveTab('projects');
               setIsCollapsed(false);
             }}
-            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
               activeTab === 'projects'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                : 'text-[#94A3B8] hover:text-white hover:bg-[#162238]'
+                ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             title="โฟลเดอร์โครงการ (Projects)"
             aria-label="โฟลเดอร์โครงการ"
@@ -217,10 +217,10 @@ export default function LeftSidebar({
               setActiveTab('savedViews');
               setIsCollapsed(false);
             }}
-            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
               activeTab === 'savedViews'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                : 'text-[#94A3B8] hover:text-white hover:bg-[#162238]'
+                ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             title="มุมมองกล้อง 3D ที่บันทึกไว้ (Saved Views)"
             aria-label="มุมมองกล้อง 3D ที่บันทึกไว้"
@@ -234,10 +234,10 @@ export default function LeftSidebar({
               setActiveTab('layers');
               setIsCollapsed(false);
             }}
-            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+            className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
               activeTab === 'layers'
-                ? 'bg-[#06B6D4]/20 text-[#22D3EE] border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                : 'text-[#94A3B8] hover:text-white hover:bg-[#162238]'
+                ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             title="การจัดการเลเยอร์ (Layers)"
             aria-label="การจัดการเลเยอร์"
@@ -247,25 +247,25 @@ export default function LeftSidebar({
         </div>
 
         {/* Bottom indicator */}
-        <div className="w-8 h-[2px] bg-[#06B6D4]/40 rounded-full mb-1" />
+        <div className="w-8 h-[2px] bg-primary/40 rounded-full mb-1" />
       </aside>
     );
   }
 
   return (
     <aside
-      className="w-80 bg-[#101A2D]/95 border-r border-[rgba(148,163,184,0.20)] flex flex-col h-[calc(100vh-4rem)] select-none text-[#CBD5E1] z-20 backdrop-blur-md shadow-2xl transition-all duration-200"
+      className="w-80 bg-card/95 border-r border-border flex flex-col h-full select-none text-foreground z-20 backdrop-blur-md shadow-2xl transition-all duration-200"
       aria-label="แผงข้อมูลเชิงพื้นที่ด้านซ้าย"
     >
       {/* Header with Title and Collapse Button (44x44px target) */}
-      <div className="px-3 py-2.5 border-b border-[rgba(148,163,184,0.15)] bg-[#162238]/60 flex items-center justify-between">
-        <span className="text-xs font-bold text-[#F1F5F9] uppercase tracking-wider flex items-center gap-1.5">
-          <Layers className="w-4 h-4 text-[#06B6D4]" />
+      <div className="px-3 py-2.5 border-b border-border bg-card-secondary/70 flex items-center justify-between">
+        <span className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <Layers className="w-4 h-4 text-primary" />
           <span>การจัดการข้อมูลเชิงพื้นที่</span>
         </span>
         <button
           onClick={() => setIsCollapsed(true)}
-          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1C2940] border border-transparent hover:border-[rgba(148,163,184,0.20)] focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none transition-all"
+          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none transition-all cursor-pointer"
           title="ยุบแถบด้านซ้ายเพื่อขยายพื้นที่แผนที่ 3D"
           aria-label="ยุบแถบด้านซ้าย"
         >
@@ -274,14 +274,14 @@ export default function LeftSidebar({
       </div>
 
       {/* Tab Switcher (min 44px height buttons) */}
-      <div className="grid grid-cols-5 border-b border-[rgba(148,163,184,0.15)] bg-[#080F20]/50 p-1.5 gap-1 text-xs font-medium">
+      <div className="grid grid-cols-5 border-b border-border bg-card-secondary/50 p-1.5 gap-1 text-xs font-medium">
         <button
           onClick={() => setActiveTab('menu')}
           title="เมนูระบบหลัก (System Navigation)"
-          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
             activeTab === 'menu'
-              ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#162238]'
+              ? 'bg-primary/10 text-primary font-bold border border-primary/30 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           aria-selected={activeTab === 'menu'}
         >
@@ -292,10 +292,10 @@ export default function LeftSidebar({
         <button
           onClick={() => setActiveTab('areas')}
           title="พื้นที่ในการดูแล (Managed Areas)"
-          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
             activeTab === 'areas'
-              ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#162238]'
+              ? 'bg-primary/10 text-primary font-bold border border-primary/30 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           aria-selected={activeTab === 'areas'}
         >
@@ -306,10 +306,10 @@ export default function LeftSidebar({
         <button
           onClick={() => setActiveTab('projects')}
           title="โฟลเดอร์โครงการ (Project Folders)"
-          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
             activeTab === 'projects'
-              ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#162238]'
+              ? 'bg-primary/10 text-primary font-bold border border-primary/30 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           aria-selected={activeTab === 'projects'}
         >
@@ -320,10 +320,10 @@ export default function LeftSidebar({
         <button
           onClick={() => setActiveTab('savedViews')}
           title="มุมมองกล้อง 3D ที่บันทึกไว้ (Saved Views)"
-          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
             activeTab === 'savedViews'
-              ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#162238]'
+              ? 'bg-primary/10 text-primary font-bold border border-primary/30 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           aria-selected={activeTab === 'savedViews'}
         >
@@ -334,10 +334,10 @@ export default function LeftSidebar({
         <button
           onClick={() => setActiveTab('layers')}
           title="การจัดการเลเยอร์ (Layer Navigation)"
-          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+          className={`min-h-[44px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer ${
             activeTab === 'layers'
-              ? 'bg-[#06B6D4]/20 text-[#22D3EE] font-bold border border-[#06B6D4]/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#162238]'
+              ? 'bg-primary/10 text-primary font-bold border border-primary/30 shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           aria-selected={activeTab === 'layers'}
         >
@@ -351,7 +351,7 @@ export default function LeftSidebar({
         {/* Tab 0: System Navigation Menu */}
         {activeTab === 'menu' && (
           <div className="space-y-3">
-            <div className="px-1 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
+            <div className="px-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               เมนูระบบหลัก (Main Navigation)
             </div>
             <div className="space-y-1">
@@ -375,11 +375,11 @@ export default function LeftSidebar({
                     href={item.href}
                     className={`min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-medium flex items-center gap-3 transition-colors ${
                       isCurrent
-                        ? 'bg-[#06B6D4] text-[#080F20] font-bold shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                        : 'text-[#CBD5E1] hover:text-white hover:bg-[#162238]'
+                        ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                        : 'text-foreground hover:bg-muted'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isCurrent ? 'text-[#080F20]' : 'text-[#06B6D4]'}`} />
+                    <Icon className={`w-4 h-4 ${isCurrent ? 'text-primary-foreground' : 'text-primary'}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -392,14 +392,14 @@ export default function LeftSidebar({
         {activeTab === 'areas' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 พื้นที่ในการดูแล ({filteredAreas.length}/{areas.length})
               </span>
               {onOpenCreateArea && (
                 <button
                   onClick={onOpenCreateArea}
                   title="สร้างพื้นที่ใหม่"
-                  className="min-h-[40px] px-2.5 py-1 bg-[#06B6D4]/20 hover:bg-[#06B6D4]/30 text-[#22D3EE] font-semibold rounded-lg text-xs border border-[#06B6D4]/40 flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-[#22D3EE] transition-all"
+                  className="min-h-[40px] px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary font-semibold rounded-lg text-xs border border-primary/30 flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-ring transition-all cursor-pointer"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>เพิ่มพื้นที่</span>
@@ -411,13 +411,13 @@ export default function LeftSidebar({
             {areas.length > 0 && (
               <div className="space-y-2">
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-3.5 text-[#94A3B8]" />
+                  <Search className="w-4 h-4 absolute left-3 top-3.5 text-muted-foreground" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ค้นหาชื่อพื้นที่ หรือพิมพ์พิกัด 12.675, 101.145..."
-                    className="w-full min-h-[44px] pl-9 pr-3 py-2 bg-[#162238] border border-[rgba(148,163,184,0.20)] rounded-lg text-xs text-[#F1F5F9] placeholder-[#94A3B8] outline-none focus-visible:ring-2 focus-visible:ring-[#22D3EE]"
+                    className="w-full min-h-[44px] pl-9 pr-3 py-2 bg-card-secondary border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="ค้นหาพื้นที่หรือพิกัด"
                   />
                 </div>
@@ -430,11 +430,11 @@ export default function LeftSidebar({
                         onSearchCoordinates({ lat: parsedCoords.lat, lon: parsedCoords.lon });
                       }
                     }}
-                    className="w-full min-h-[44px] p-2 bg-[#06B6D4]/20 hover:bg-[#06B6D4]/30 border border-[#06B6D4] rounded-xl flex items-center justify-between text-xs text-[#22D3EE] font-mono transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] animate-in fade-in"
+                    className="w-full min-h-[44px] p-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl flex items-center justify-between text-xs text-primary font-mono transition-all shadow-sm animate-in fade-in cursor-pointer"
                     title="บินไปยังพิกัดเป้าหมายทันที"
                   >
                     <div className="flex items-center gap-2">
-                      <Compass className="w-4 h-4 text-[#06B6D4] animate-spin" />
+                      <Compass className="w-4 h-4 text-primary animate-spin" />
                       <span className="font-sans font-bold">บินไปยังพิกัด:</span>
                     </div>
                     <span className="font-bold">
@@ -446,20 +446,20 @@ export default function LeftSidebar({
             )}
 
             {areas.length === 0 ? (
-              <div className="p-6 rounded-2xl border border-dashed border-[rgba(148,163,184,0.25)] text-center space-y-3 bg-[#162238]/40">
-                <div className="w-10 h-10 rounded-full bg-[#06B6D4]/10 text-[#06B6D4] flex items-center justify-center mx-auto">
+              <div className="p-6 rounded-2xl border border-dashed border-border text-center space-y-3 bg-card-secondary/40">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-[#F1F5F9]">ยังไม่มีพื้นที่ในการดูแล</div>
-                  <p className="text-xs text-[#94A3B8] mt-1">
+                  <div className="text-sm font-semibold text-foreground">ยังไม่มีพื้นที่ในการดูแล</div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     เริ่มต้นกำหนดขอบเขตพื้นที่เพื่อเริ่มตรวจจับความเปลี่ยนแปลง
                   </p>
                 </div>
                 {onOpenCreateArea && (
                   <button
                     onClick={onOpenCreateArea}
-                    className="w-full min-h-[44px] py-2 px-3 bg-[#06B6D4] hover:bg-[#22D3EE] text-[#080F20] font-bold rounded-lg text-xs transition-all flex items-center justify-center gap-2 shadow-md focus-visible:ring-2 focus-visible:ring-[#22D3EE]"
+                    className="w-full min-h-[44px] py-2 px-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg text-xs transition-all flex items-center justify-center gap-2 shadow-sm focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>สร้างพื้นที่ดูแลใหม่</span>
@@ -467,7 +467,7 @@ export default function LeftSidebar({
                 )}
               </div>
             ) : filteredAreas.length === 0 ? (
-              <div className="p-4 text-center text-xs text-[#94A3B8] bg-[#162238]/30 rounded-xl border border-[rgba(148,163,184,0.15)]">
+              <div className="p-4 text-center text-xs text-muted-foreground bg-card-secondary/50 rounded-xl border border-border">
                 ไม่พบพื้นที่ที่ตรงกับคำค้นหา &ldquo;{searchQuery}&rdquo;
               </div>
             ) : (
@@ -478,10 +478,10 @@ export default function LeftSidebar({
                     <div
                       key={area.id}
                       onClick={() => onSelectArea && onSelectArea(area.id)}
-                      className={`min-h-[56px] p-3 rounded-xl border text-xs cursor-pointer transition-all space-y-1.5 focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+                      className={`min-h-[56px] p-3 rounded-xl border text-xs cursor-pointer transition-all space-y-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                         isSelected
-                          ? 'bg-[#1C2940] border-[#06B6D4] text-[#F1F5F9] shadow-[0_0_15px_rgba(6,182,212,0.3)] ring-1 ring-[#06B6D4]'
-                          : 'bg-[#162238]/80 border-[rgba(148,163,184,0.15)] hover:border-[#06B6D4]/50 hover:bg-[#162238] text-[#CBD5E1]'
+                          ? 'bg-primary/10 border-primary text-foreground shadow-sm ring-1 ring-primary'
+                          : 'bg-card-secondary/80 border-border hover:border-primary/40 hover:bg-card-secondary text-foreground'
                       }`}
                       role="button"
                       tabIndex={0}
@@ -493,16 +493,16 @@ export default function LeftSidebar({
                       aria-pressed={isSelected}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-[#F1F5F9] line-clamp-1">{area.name}</span>
-                        <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#06B6D4]' : 'text-[#94A3B8]'}`} />
+                        <span className="font-bold text-sm text-foreground line-clamp-1">{area.name}</span>
+                        <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                       </div>
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-[#06B6D4] font-semibold">{formatAreaThai(area.areaSqm)}</span>
+                        <span className="text-primary font-semibold">{formatAreaThai(area.areaSqm)}</span>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             area.status === 'monitoring'
-                              ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/40'
-                              : 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40'
+                              ? 'bg-warning/15 text-warning border border-warning/30'
+                              : 'bg-success/15 text-success border border-success/30'
                           }`}
                         >
                           {area.status === 'monitoring' ? 'เฝ้าระวัง' : 'ปกติ'}
@@ -519,17 +519,17 @@ export default function LeftSidebar({
         {/* Tab 2: Project Hierarchy */}
         {activeTab === 'projects' && (
           <div className="space-y-3 text-xs">
-            <div className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider px-1">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
               โครงสร้างโฟลเดอร์โครงการ (Projects)
             </div>
 
             {projects.length === 0 ? (
-              <div className="p-6 rounded-2xl border border-dashed border-[rgba(148,163,184,0.25)] text-center space-y-3 bg-[#162238]/40">
-                <FolderKanban className="w-8 h-8 text-[#94A3B8] mx-auto" />
-                <div className="text-sm font-semibold text-[#F1F5F9]">ยังไม่มีโครงการในระบบ</div>
+              <div className="p-6 rounded-2xl border border-dashed border-border text-center space-y-3 bg-card-secondary/40">
+                <FolderKanban className="w-8 h-8 text-muted-foreground mx-auto" />
+                <div className="text-sm font-semibold text-foreground">ยังไม่มีโครงการในระบบ</div>
                 <Link
                   href="/projects"
-                  className="inline-flex items-center justify-center min-h-[44px] w-full px-3 bg-[#06B6D4]/20 hover:bg-[#06B6D4]/30 border border-[#06B6D4]/40 rounded-lg text-[#22D3EE] text-xs font-bold transition-all"
+                  className="inline-flex items-center justify-center min-h-[44px] w-full px-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-primary text-xs font-bold transition-all"
                 >
                   + สร้างโครงการใหม่
                 </Link>
@@ -539,14 +539,14 @@ export default function LeftSidebar({
                 {projects.map((proj) => (
                   <div
                     key={proj.id}
-                    className="bg-[#162238]/80 border border-[rgba(148,163,184,0.15)] rounded-xl p-3 space-y-1.5 hover:border-[#06B6D4]/40 transition-colors"
+                    className="bg-card-secondary border border-border rounded-xl p-3 space-y-1.5 hover:border-primary/40 transition-colors"
                   >
-                    <div className="font-bold text-sm text-[#F1F5F9] flex items-center gap-2">
-                      <FolderKanban className="w-4 h-4 text-[#06B6D4] shrink-0" />
+                    <div className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <FolderKanban className="w-4 h-4 text-primary shrink-0" />
                       <span className="line-clamp-1">{proj.name}</span>
                     </div>
                     {proj.description && (
-                      <p className="text-xs text-[#94A3B8] pl-6 line-clamp-2">{proj.description}</p>
+                      <p className="text-xs text-muted-foreground pl-6 line-clamp-2">{proj.description}</p>
                     )}
                   </div>
                 ))}
@@ -555,7 +555,7 @@ export default function LeftSidebar({
 
             <Link
               href="/projects"
-              className="min-h-[44px] flex items-center justify-center text-center py-2 px-3 bg-[#162238] border border-[#06B6D4]/30 hover:border-[#06B6D4] rounded-lg text-[#06B6D4] hover:text-white text-xs font-bold transition-all shadow-sm"
+              className="min-h-[44px] flex items-center justify-center text-center py-2 px-3 bg-card-secondary border border-border hover:border-primary rounded-lg text-primary hover:text-primary-hover text-xs font-bold transition-all shadow-sm"
             >
               จัดการโครงการทั้งหมด (Manage Projects) ➔
             </Link>
@@ -565,7 +565,7 @@ export default function LeftSidebar({
         {/* Tab 3: Saved Views / Camera Bookmarks */}
         {activeTab === 'savedViews' && (
           <div className="space-y-3 text-xs">
-            <div className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider px-1">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
               มุมมองกล้อง 3D ที่บันทึกไว้ ({savedViews.length})
             </div>
 
@@ -577,10 +577,10 @@ export default function LeftSidebar({
                   <div
                     key={view.id}
                     onClick={() => handleSelectView(view.id)}
-                    className={`min-h-[56px] p-3 rounded-xl border cursor-pointer transition-all space-y-1.5 focus-visible:ring-2 focus-visible:ring-[#22D3EE] focus-visible:outline-none ${
+                    className={`min-h-[56px] p-3 rounded-xl border cursor-pointer transition-all space-y-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
                       isCurrent
-                        ? 'bg-[#1C2940] border-[#06B6D4] text-[#F1F5F9] shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                        : 'bg-[#162238]/80 border-[rgba(148,163,184,0.15)] hover:border-[#06B6D4]/50 hover:bg-[#162238] text-[#CBD5E1]'
+                        ? 'bg-primary/10 border-primary text-foreground shadow-sm ring-1 ring-primary'
+                        : 'bg-card-secondary/80 border-border hover:border-primary/40 hover:bg-card-secondary text-foreground'
                     }`}
                     role="button"
                     tabIndex={0}
@@ -591,15 +591,15 @@ export default function LeftSidebar({
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="font-bold text-sm text-[#F1F5F9] flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-[#06B6D4] shrink-0" />
+                      <div className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-primary shrink-0" />
                         <span>{view.title}</span>
                       </div>
-                      <span className="text-[10px] bg-[#101A2D] text-[#22D3EE] px-1.5 py-0.5 rounded border border-[rgba(148,163,184,0.2)] font-mono">
+                      <span className="text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border font-mono">
                         {view.tag}
                       </span>
                     </div>
-                    <p className="text-xs text-[#94A3B8] pl-6 leading-relaxed">{view.description}</p>
+                    <p className="text-xs text-muted-foreground pl-6 leading-relaxed">{view.description}</p>
                   </div>
                 );
               })}
@@ -610,12 +610,12 @@ export default function LeftSidebar({
         {/* Tab 4: Layer Navigation & Opacity */}
         {activeTab === 'layers' && (
           <div className="space-y-3 text-xs">
-            <div className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider px-1">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
               ควบคุมการแสดงผลและระดับความทึบแสงของเลเยอร์
             </div>
 
             {/* Layer 1: Orthomosaic */}
-            <div className="p-3 bg-[#162238]/80 border border-[rgba(148,163,184,0.20)] rounded-xl space-y-2.5">
+            <div className="p-3 bg-card-secondary border border-border rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button
@@ -624,15 +624,15 @@ export default function LeftSidebar({
                         onUpdateLayerSettings({ orthoVisible: !(layerSettings.orthoVisible ?? true) });
                       }
                     }}
-                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-[#1C2940] text-[#06B6D4] hover:text-white"
+                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-card text-primary hover:bg-muted border border-border transition-colors cursor-pointer"
                     title={(layerSettings.orthoVisible ?? true) ? 'ซ่อนเลเยอร์' : 'แสดงเลเยอร์'}
                     aria-label="สลับการแสดงผลภาพถ่ายออร์โธโมเสก"
                   >
-                    {(layerSettings.orthoVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-[#94A3B8]" />}
+                    {(layerSettings.orthoVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </button>
-                  <span className="font-semibold text-sm text-[#F1F5F9]">ภาพถ่ายออร์โธโมเสก (Orthomosaic)</span>
+                  <span className="font-semibold text-sm text-foreground">ภาพถ่ายออร์โธโมเสก (Orthomosaic)</span>
                 </div>
-                <span className="text-xs font-mono text-[#06B6D4] font-bold">
+                <span className="text-xs font-mono text-primary font-bold">
                   {(layerSettings.orthoVisible ?? true) ? `${layerSettings.orthoOpacity ?? 100}%` : 'ซ่อน'}
                 </span>
               </div>
@@ -647,14 +647,14 @@ export default function LeftSidebar({
                       onUpdateLayerSettings({ orthoOpacity: Number(e.target.value) });
                     }
                   }}
-                  className="w-full h-2 bg-[#1C2940] rounded-lg appearance-none cursor-pointer accent-[#06B6D4]"
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                   aria-label="ระดับความโปร่งแสงภาพถ่ายออร์โธโมเสก"
                 />
               )}
             </div>
 
             {/* Layer 2: DSM Elevation */}
-            <div className="p-3 bg-[#162238]/80 border border-[rgba(148,163,184,0.20)] rounded-xl space-y-2.5">
+            <div className="p-3 bg-card-secondary border border-border rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button
@@ -663,15 +663,15 @@ export default function LeftSidebar({
                         onUpdateLayerSettings({ dsmVisible: !(layerSettings.dsmVisible ?? true) });
                       }
                     }}
-                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-[#1C2940] text-[#06B6D4] hover:text-white"
+                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-card text-primary hover:bg-muted border border-border transition-colors cursor-pointer"
                     title={(layerSettings.dsmVisible ?? true) ? 'ซ่อนเลเยอร์' : 'แสดงเลเยอร์'}
                     aria-label="สลับการแสดงผลระดับความสูงพื้นผิว DSM"
                   >
-                    {(layerSettings.dsmVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-[#94A3B8]" />}
+                    {(layerSettings.dsmVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </button>
-                  <span className="font-semibold text-sm text-[#F1F5F9]">ระดับความสูงพื้นผิว (DSM)</span>
+                  <span className="font-semibold text-sm text-foreground">ระดับความสูงพื้นผิว (DSM)</span>
                 </div>
-                <span className="text-xs font-mono text-[#06B6D4] font-bold">
+                <span className="text-xs font-mono text-primary font-bold">
                   {(layerSettings.dsmVisible ?? true) ? `${layerSettings.dsmOpacity ?? 80}%` : 'ซ่อน'}
                 </span>
               </div>
@@ -686,14 +686,14 @@ export default function LeftSidebar({
                       onUpdateLayerSettings({ dsmOpacity: Number(e.target.value) });
                     }
                   }}
-                  className="w-full h-2 bg-[#1C2940] rounded-lg appearance-none cursor-pointer accent-[#06B6D4]"
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                   aria-label="ระดับความโปร่งแสงระดับความสูง DSM"
                 />
               )}
             </div>
 
             {/* Layer 3: 3D Tiles Mesh */}
-            <div className="p-3 bg-[#162238]/80 border border-[rgba(148,163,184,0.20)] rounded-xl space-y-2.5">
+            <div className="p-3 bg-card-secondary border border-border rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button
@@ -702,15 +702,15 @@ export default function LeftSidebar({
                         onUpdateLayerSettings({ meshVisible: !(layerSettings.meshVisible ?? true) });
                       }
                     }}
-                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-[#1C2940] text-[#06B6D4] hover:text-white"
+                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-card text-primary hover:bg-muted border border-border transition-colors cursor-pointer"
                     title={(layerSettings.meshVisible ?? true) ? 'ซ่อนเลเยอร์' : 'แสดงเลเยอร์'}
                     aria-label="สลับการแสดงผลโมเดล 3D Tiles"
                   >
-                    {(layerSettings.meshVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-[#94A3B8]" />}
+                    {(layerSettings.meshVisible ?? true) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </button>
-                  <span className="font-semibold text-sm text-[#F1F5F9]">โมเดลสิ่งปลูกสร้าง (3D Tiles)</span>
+                  <span className="font-semibold text-sm text-foreground">โมเดลสิ่งปลูกสร้าง (3D Tiles)</span>
                 </div>
-                <span className="text-xs font-mono text-[#06B6D4] font-bold">
+                <span className="text-xs font-mono text-primary font-bold">
                   {(layerSettings.meshVisible ?? true) ? `${layerSettings.meshOpacity ?? 90}%` : 'ซ่อน'}
                 </span>
               </div>
@@ -725,7 +725,7 @@ export default function LeftSidebar({
                       onUpdateLayerSettings({ meshOpacity: Number(e.target.value) });
                     }
                   }}
-                  className="w-full h-2 bg-[#1C2940] rounded-lg appearance-none cursor-pointer accent-[#06B6D4]"
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                   aria-label="ระดับความโปร่งแสงโมเดล 3D Tiles"
                 />
               )}
@@ -735,9 +735,9 @@ export default function LeftSidebar({
       </div>
 
       {/* Footer Spatial Coordinate Reference Status */}
-      <div className="p-3 border-t border-[rgba(148,163,184,0.20)] bg-[#101A2D] text-xs text-[#94A3B8] flex items-center justify-between">
-        <span className="font-mono text-[#94A3B8]">CRS: EPSG:4326</span>
-        <span className="text-[#06B6D4] font-mono font-bold text-[11px]">WGS84 / UTM 47N</span>
+      <div className="p-3 border-t border-border bg-card-secondary text-xs text-muted-foreground flex items-center justify-between">
+        <span className="font-mono text-muted-foreground">CRS: EPSG:4326</span>
+        <span className="text-primary font-mono font-bold text-[11px]">WGS84 / UTM 47N</span>
       </div>
     </aside>
   );

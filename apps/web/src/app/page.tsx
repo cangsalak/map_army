@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Navbar from '@/components/layout/Navbar';
+import Sidebar from '@/components/layout/Sidebar';
 import LeftSidebar from '@/components/layout/LeftSidebar';
 import SurveyTimeline, { TimelineSurvey } from '@/components/timeline/SurveyTimeline';
 import AnalysisPanel from '@/components/analysis/AnalysisPanel';
@@ -12,6 +13,7 @@ import { AreaFeature, ChangePolygonFeature, LayerSettings } from '@/components/m
 import { apiFetch, getClientToken } from '@/lib/api';
 import { LoadingState, ErrorState } from '@/components/common/StateViews';
 import { Plus, Sparkles, MapPin, Layers, Globe, CheckCircle2, TrendingDown, ArrowRight, Loader2, X, AlertCircle } from 'lucide-react';
+import { Button, Modal, FormField, Input, Textarea } from '@/components/ui/primitives';
 
 // Dynamically import CesiumMap with SSR disabled (requires window & WebGL)
 const CesiumMap = dynamic(() => import('@/components/map/CesiumMap'), {
@@ -38,6 +40,7 @@ export default function GISCommandCenterDashboard() {
 
   const [savedViewKey, setSavedViewKey] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<any>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Global Map Layer Settings (Single Source of Truth)
   const [layerSettings, setLayerSettings] = useState<LayerSettings>({
@@ -298,85 +301,46 @@ export default function GISCommandCenterDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-navy-950 font-sans">
-      {/* 1. Top Navigation Bar */}
-      <Navbar
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans transition-colors duration-150">
+      {/* 1. Left Full-Height NextAdmin Sidebar (navigation) */}
+      <Sidebar
         areas={areas}
         selectedAreaId={selectedAreaId}
         onSelectArea={setSelectedAreaId}
-        onOpenNotifications={() =>
-          setActiveJob({
-            id: 'job-notif',
-            jobType: 'photogrammetry_ingest',
-            status: 'processing',
-            progressPercent: 65,
-          })
-        }
+        onOpenCreateArea={() => setIsCreateModalOpen(true)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      {/* 2. Main GIS Command Center Layout */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Sidebar: Projects, Managed Areas, Saved Views, Layer Navigation */}
-        <LeftSidebar
+      {/* 2. Right Workspace Container: Top Navbar + GIS Viewport */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+        {/* NextAdmin Top Navigation Bar — always fixed height (h-16) */}
+        <Navbar
           areas={areas}
           selectedAreaId={selectedAreaId}
           onSelectArea={setSelectedAreaId}
-          onSelectSavedView={setSavedViewKey}
-          onOpenCreateArea={() => setIsCreateModalOpen(true)}
-          defaultCollapsed={true}
-          layerSettings={layerSettings}
-          onUpdateLayerSettings={handleUpdateLayerSettings}
-          onSearchCoordinates={handleSearchCoordinates}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onOpenNotifications={() =>
+            setActiveJob({
+              id: 'job-notif',
+              jobType: 'photogrammetry_ingest',
+              status: 'processing',
+              progressPercent: 65,
+            })
+          }
         />
 
-        {/* 3. Center Visually Dominant 3D Map Canvas */}
-        <div className="flex-1 flex flex-col relative h-full">
-          {/* Floating HUD Metric Cards */}
-          <MetricHUD metrics={metrics} />
+        {/* 3. GIS Map Viewport — LAYER ARCHITECTURE
+            Layer 0 (bottom): Cesium WebGL Canvas fills the entire viewport absolutely.
+                              Width/Height NEVER change when sidebars open/close.
+            Layer 1 (top):    All UI panels float as absolute overlays over the map.
+        */}
+        <div className="flex-1 relative overflow-hidden min-w-0">
 
-          {/* Background Processing Job Indicator Dock */}
-          {activeJob && (
-            <ProcessingIndicator job={activeJob} onClose={() => setActiveJob(null)} />
-          )}
-
-          {/* Non-intrusive Empty State Alert (When 0 Areas Exist, doesn't block map canvas) */}
-          {areas.length === 0 && !isLoading && !isBannerDismissed && (
-            <div
-              className="absolute top-4 left-4 z-20 max-w-sm bg-[#101A2D]/95 border border-[#06B6D4]/40 rounded-2xl p-4 shadow-2xl backdrop-blur-md select-none animate-in fade-in slide-in-from-top-2 duration-200"
-              role="alert"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#06B6D4]/15 text-[#06B6D4] flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-[#F1F5F9]">ระบบพร้อมใช้งาน (Ready)</h4>
-                    <button
-                      onClick={() => setIsBannerDismissed(true)}
-                      className="min-w-[28px] min-h-[28px] flex items-center justify-center text-[#94A3B8] hover:text-white rounded-lg hover:bg-[#162238] transition-colors"
-                      aria-label="ปิดการแจ้งเตือน"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-[#CBD5E1] leading-relaxed">
-                    ยังไม่มีพื้นที่ดูแลในระบบ กำหนดขอบเขตเพื่อเริ่มตรวจจับความเปลี่ยนแปลง
-                  </p>
-                  <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="mt-2 min-h-[40px] px-3.5 py-1.5 bg-[#06B6D4] hover:bg-[#22D3EE] text-[#080F20] font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md focus-visible:ring-2 focus-visible:ring-[#22D3EE] cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>+ กำหนดพื้นที่ดูแลใหม่</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Interactive Cesium 3D Globe */}
-          <div className="flex-1 relative">
+          {/* ── LAYER 0: Cesium 3D Map Canvas ─────────────────────────────
+              absolute inset-0 ensures it always fills the full container
+              regardless of what overlays sit on top.                      */}
+          <div className="absolute inset-0">
             <CesiumMap
               areas={areas}
               selectedAreaId={selectedAreaId}
@@ -387,146 +351,187 @@ export default function GISCommandCenterDashboard() {
             />
           </div>
 
-          {/* 4. Bottom Timeline: Survey dates & historical comparison control */}
-          <SurveyTimeline
-            surveys={surveys}
-            baselineSurveyId={baselineSurveyId}
-            comparisonSurveyId={comparisonSurveyId}
-            onSelectBaseline={setBaselineSurveyId}
-            onSelectComparison={setComparisonSurveyId}
-            onRunComparison={handleRunComparison}
-          />
-        </div>
+          {/* ── LAYER 1: Floating Overlay UI ──────────────────────────────
+              All panels are pointer-events-none on the wrapper so clicks
+              pass through to the map; individual interactive elements
+              restore pointer-events-auto.                                  */}
 
-        {/* 5. Right Inspector Panel: Metadata, Survey dates, Change stats, Analyst notes */}
-        <AnalysisPanel
-          areaName={selectedArea?.name}
-          areaSqm={selectedArea?.areaSqm}
-          totalChangeAreaSqm={analysisData?.totalChangeAreaSqm}
-          cutVolumeM3={analysisData?.cutVolumeM3}
-          fillVolumeM3={analysisData?.fillVolumeM3}
-          netVolumeM3={analysisData?.netVolumeM3}
-          confidenceScore={analysisData?.confidenceScore}
-          features={changeFeatures}
-          onReviewFeature={handleReviewFeature}
-          onGenerateReport={handleGenerateReport}
-        />
+          {/* Left GIS Tool & Spatial Data Panel — slides over the map */}
+          <div className="absolute top-0 left-0 h-full z-20 pointer-events-none">
+            <div className="pointer-events-auto h-full">
+              <LeftSidebar
+                areas={areas}
+                selectedAreaId={selectedAreaId}
+                onSelectArea={setSelectedAreaId}
+                onSelectSavedView={setSavedViewKey}
+                onOpenCreateArea={() => setIsCreateModalOpen(true)}
+                defaultCollapsed={true}
+                layerSettings={layerSettings}
+                onUpdateLayerSettings={handleUpdateLayerSettings}
+                onSearchCoordinates={handleSearchCoordinates}
+              />
+            </div>
+          </div>
+
+          {/* Right Inspector Panel — slides in from the right over the map */}
+          <div className="absolute top-0 right-0 h-full z-20 pointer-events-none">
+            <div className="pointer-events-auto h-full">
+              <AnalysisPanel
+                areaName={selectedArea?.name}
+                areaSqm={selectedArea?.areaSqm}
+                totalChangeAreaSqm={analysisData?.totalChangeAreaSqm}
+                cutVolumeM3={analysisData?.cutVolumeM3}
+                fillVolumeM3={analysisData?.fillVolumeM3}
+                netVolumeM3={analysisData?.netVolumeM3}
+                confidenceScore={analysisData?.confidenceScore}
+                features={changeFeatures}
+                onReviewFeature={handleReviewFeature}
+                onGenerateReport={handleGenerateReport}
+              />
+            </div>
+          </div>
+
+          {/* Bottom Timeline — floats at bottom over the map */}
+          <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
+              <SurveyTimeline
+                surveys={surveys}
+                baselineSurveyId={baselineSurveyId}
+                comparisonSurveyId={comparisonSurveyId}
+                onSelectBaseline={setBaselineSurveyId}
+                onSelectComparison={setComparisonSurveyId}
+                onRunComparison={handleRunComparison}
+              />
+            </div>
+          </div>
+
+          {/* Floating HUD Metric Cards — top-right of map */}
+          <div className="absolute top-2 right-2 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
+              <MetricHUD metrics={metrics} />
+            </div>
+          </div>
+
+          {/* Background Processing Job Indicator */}
+          {activeJob && (
+            <div className="absolute top-16 right-4 z-30 pointer-events-auto">
+              <ProcessingIndicator job={activeJob} onClose={() => setActiveJob(null)} />
+            </div>
+          )}
+
+          {/* Non-intrusive Empty State Alert */}
+          {areas.length === 0 && !isLoading && !isBannerDismissed && (
+            <div
+              className="absolute top-4 left-20 z-20 max-w-sm bg-card/95 border border-border text-foreground rounded-2xl p-4 shadow-2xl backdrop-blur-md select-none animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto"
+              role="alert"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-foreground">ระบบพร้อมใช้งาน (Ready)</h4>
+                    <button
+                      onClick={() => setIsBannerDismissed(true)}
+                      className="min-w-[28px] min-h-[28px] flex items-center justify-center text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+                      aria-label="ปิดการแจ้งเตือน"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    ยังไม่มีพื้นที่ดูแลในระบบ กำหนดขอบเขตเพื่อเริ่มตรวจจับความเปลี่ยนแปลง
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="mt-2 text-xs"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    <span>+ กำหนดพื้นที่ดูแลใหม่</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
 
-      {/* Accessible Enterprise Create Area Modal */}
-      {isCreateModalOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-[#080F20]/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="create-area-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isSubmitting) {
-              setIsCreateModalOpen(false);
-            }
-          }}
-        >
-          <div className="bg-[#101A2D] rounded-2xl p-6 border border-[rgba(148,163,184,0.25)] max-w-lg w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.20)] pb-3.5">
-              <h3 id="create-area-title" className="text-base font-bold text-[#F1F5F9] flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#06B6D4]" />
-                กำหนดพื้นที่ดูแลใหม่ (Create Managed Area)
-              </h3>
-              <button
-                onClick={() => !isSubmitting && setIsCreateModalOpen(false)}
-                className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#162238] transition-colors focus-visible:ring-2 focus-visible:ring-[#22D3EE]"
-                aria-label="ปิดหน้าต่าง"
-                disabled={isSubmitting}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Error Banner */}
-            {createError && (
-              <div className="p-3 bg-[#F43F5E]/15 border border-[#F43F5E]/40 rounded-xl text-xs text-[#F43F5E] flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{createError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateArea} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[#CBD5E1] font-semibold mb-1.5 text-xs">
-                  ชื่อพื้นที่สำรวจ *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ระบุชื่อพื้นที่ในการดูแล เช่น โซนก่อสร้างทางวิ่งสำรอง"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full min-h-[44px] bg-[#162238] border border-[rgba(148,163,184,0.25)] rounded-xl px-3.5 py-2 text-[#F1F5F9] placeholder-[#94A3B8] outline-none focus-visible:ring-2 focus-visible:ring-[#22D3EE] text-sm"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#CBD5E1] font-semibold mb-1.5 text-xs">
-                  รายละเอียดโครงการ (วัตถุประสงค์)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="วัตถุประสงค์การติดตามความก้าวหน้าโครงการ..."
-                  value={formDesc}
-                  onChange={(e) => setFormDesc(e.target.value)}
-                  className="w-full bg-[#162238] border border-[rgba(148,163,184,0.25)] rounded-xl px-3.5 py-2.5 text-[#F1F5F9] placeholder-[#94A3B8] outline-none focus-visible:ring-2 focus-visible:ring-[#22D3EE] text-xs leading-relaxed"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#CBD5E1] font-semibold mb-1.5 text-xs">
-                  พิกัดรูปหลายเหลี่ยม (Longitude, Latitude ต่อบรรทัด) *
-                </label>
-                <textarea
-                  rows={5}
-                  required
-                  placeholder="101.1400, 12.6700&#10;101.1600, 12.6700&#10;101.1600, 12.6850&#10;101.1400, 12.6850&#10;101.1400, 12.6700"
-                  value={formCoords}
-                  onChange={(e) => setFormCoords(e.target.value)}
-                  className="w-full bg-[#162238] border border-[rgba(148,163,184,0.25)] rounded-xl px-3.5 py-2.5 text-[#22D3EE] font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-[#22D3EE]"
-                  disabled={isSubmitting}
-                />
-                <p className="text-[11px] text-[#94A3B8] mt-1.5">
-                  ระบุพิกัดแบบทวนเข็มนาฬิกา จุดเริ่มต้นและจุดสิ้นสุดต้องเป็นพิกัดเดียวกันเพื่อปิดขอบเขต (Closed Ring)
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-[rgba(148,163,184,0.20)]">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  disabled={isSubmitting}
-                  className="min-h-[44px] px-5 py-2 bg-[#162238] hover:bg-[#1C2940] text-[#CBD5E1] hover:text-white rounded-xl text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-[#22D3EE]"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-h-[44px] px-5 py-2 bg-[#06B6D4] hover:bg-[#22D3EE] disabled:opacity-50 text-[#080F20] font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg focus-visible:ring-2 focus-visible:ring-[#22D3EE] cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      กำลังบันทึกและคำนวณ PostGIS...
-                    </>
-                  ) : (
-                    'บันทึกพื้นที่และคำนวณด้วย PostGIS'
-                  )}
-                </button>
-              </div>
-            </form>
+      {/* Standardized Create Area Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => !isSubmitting && setIsCreateModalOpen(false)}
+        title="กำหนดพื้นที่ดูแลใหม่ (Create Managed Area)"
+        description="ระบุชื่อแปลงและป้อนจุดพิกัดรูปปิด Linear Ring ตามมาตรฐาน PostGIS Polygon"
+        maxWidth="lg"
+      >
+        {createError && (
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-xl text-xs text-destructive flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{createError}</span>
           </div>
-        </div>
-      )}
+        )}
+
+        <form onSubmit={handleCreateArea} className="space-y-4">
+          <FormField label="ชื่อพื้นที่สำรวจ" required>
+            <Input
+              required
+              placeholder="ระบุชื่อพื้นที่ในการดูแล เช่น โซนก่อสร้างทางวิ่งสำรอง"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </FormField>
+
+          <FormField label="รายละเอียดโครงการ (วัตถุประสงค์)">
+            <Textarea
+              rows={2}
+              placeholder="วัตถุประสงค์การติดตามความก้าวหน้าโครงการ..."
+              value={formDesc}
+              onChange={(e) => setFormDesc(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </FormField>
+
+          <FormField
+            label="พิกัดรูปหลายเหลี่ยม (Longitude, Latitude ต่อบรรทัด)"
+            required
+            hint="ระบุพิกัดแบบทวนเข็มนาฬิกา จุดแรกและจุดสุดท้ายเหมือนกัน"
+          >
+            <Textarea
+              rows={5}
+              required
+              placeholder="101.1400, 12.6700&#10;101.1600, 12.6700&#10;101.1600, 12.6850&#10;101.1400, 12.6850&#10;101.1400, 12.6700"
+              value={formCoords}
+              onChange={(e) => setFormCoords(e.target.value)}
+              className="font-mono text-xs"
+              disabled={isSubmitting}
+            />
+          </FormField>
+
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateModalOpen(false)}
+              disabled={isSubmitting}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+            >
+              {isSubmitting ? 'กำลังบันทึกและคำนวณ PostGIS...' : 'บันทึกพื้นที่และคำนวณด้วย PostGIS'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

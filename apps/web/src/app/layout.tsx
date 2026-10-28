@@ -22,14 +22,43 @@ export const metadata: Metadata = {
     'แพลตฟอร์มภูมิสารสนเทศ 3 มิติระดับโปรดักชันสำหรับการติดตามการเปลี่ยนแปลงพื้นที่ วิเคราะห์ภาพถ่ายและระดับความสูงจากโดรน คำนวณปริมาตรงานดินขุดถม (Cut/Fill)',
 };
 
+const themeInitScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('geomonitor_theme');
+    var isDark = stored ? stored === 'dark' : false;
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  } catch (e) {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.style.colorScheme = 'light';
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={`dark ${inter.variable} ${sarabun.variable}`}>
-      <body className="bg-navy-950 text-slate-100 min-h-screen font-sans antialiased overflow-hidden selection:bg-cyan-500 selection:text-navy-950">
+    <html
+      lang="th"
+      suppressHydrationWarning
+      className={`${inter.variable} ${sarabun.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="bg-background text-foreground min-h-screen font-sans antialiased overflow-hidden selection:bg-primary selection:text-white transition-colors duration-150">
         <Providers>{children}</Providers>
       </body>
     </html>

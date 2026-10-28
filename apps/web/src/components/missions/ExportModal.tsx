@@ -161,16 +161,16 @@ export default function ExportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 select-none">
-      <div className="bg-[#101A2D] border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-card border border-border text-foreground rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-card-secondary/70">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 flex items-center justify-center">
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">ส่งออกไฟล์แผนการบิน (Export Flight Plan)</h3>
-              <p className="text-[11px] text-slate-400">เลือกระบบควบคุมและอุปกรณ์เป้าหมาย</p>
+              <h3 className="text-sm font-bold text-foreground">ส่งออกไฟล์แผนการบิน (Export Flight Plan)</h3>
+              <p className="text-[11px] text-muted-foreground">เลือกระบบควบคุมและอุปกรณ์เป้าหมาย</p>
             </div>
           </div>
           <button

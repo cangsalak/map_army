@@ -98,13 +98,13 @@ export default function SimulationTimeline({
 
   if (!selectedSessionId || trackpoints.length === 0) {
     return (
-      <div className="h-16 bg-navy-900/95 border-t border-cyan-500/20 px-4 flex items-center justify-between z-20 backdrop-blur-md">
+      <div className="h-16 bg-card/95 border-t border-border px-4 flex items-center justify-between z-20 backdrop-blur-md text-foreground">
         <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-400">รอบการฝึกซ้อมจำลอง:</div>
+          <div className="text-xs text-muted-foreground font-medium">รอบการฝึกซ้อมจำลอง:</div>
           <select
             value={selectedSessionId || ''}
             onChange={(e) => onSelectSession(e.target.value)}
-            className="bg-navy-950 border border-navy-700 rounded px-2.5 py-1 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500"
+            className="bg-card-secondary border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none focus:border-primary font-medium"
           >
             <option value="">-- เลือกรอบการจำลองการเคลื่อนที่ --</option>
             {sessions.map((s) => (
@@ -114,7 +114,7 @@ export default function SimulationTimeline({
             ))}
           </select>
         </div>
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] text-muted-foreground">
           ยังไม่ได้เลือกเซสชัน หรือไม่มีชุดพิกัดจำลอง
         </div>
       </div>
@@ -122,14 +122,14 @@ export default function SimulationTimeline({
   }
 
   return (
-    <div className="h-20 bg-navy-900/95 border-t border-cyan-500/20 px-4 py-2 flex flex-col justify-between z-20 backdrop-blur-md select-none">
+    <div className="h-20 bg-card/95 border-t border-border px-4 py-2 flex flex-col justify-between z-20 backdrop-blur-md select-none text-foreground">
       {/* Top Bar: Session, Time Display, Speed */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-3">
           <select
             value={selectedSessionId}
             onChange={(e) => onSelectSession(e.target.value)}
-            className="bg-navy-950 border border-navy-700 rounded px-2 py-1 text-xs text-cyan-300 font-medium focus:outline-none focus:border-cyan-500 max-w-[260px] truncate"
+            className="bg-card-secondary border border-border rounded-lg px-2.5 py-1 text-xs text-foreground font-medium focus:outline-none focus:border-primary max-w-[260px] truncate"
           >
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
@@ -139,37 +139,37 @@ export default function SimulationTimeline({
           </select>
 
           {/* Synthetic Data Label */}
-          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-semibold">
-            <AlertTriangle className="w-3 h-3 text-amber-400" />
+          <span className="text-[10px] px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 font-semibold">
+            <AlertTriangle className="w-3 h-3 text-amber-500" />
             ข้อมูลจำลองการเคลื่อนที่ (SYNTHETIC ONLY)
           </span>
         </div>
 
         {/* Timestamp & Playback Metrics */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 font-mono text-cyan-300 bg-navy-950 px-2.5 py-1 rounded border border-navy-800">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex items-center gap-2 font-mono text-foreground bg-card-secondary px-2.5 py-1 rounded-lg border border-border">
+            <Clock className="w-3.5 h-3.5 text-primary" />
             {currentPoint
               ? new Date(currentPoint.timestamp).toLocaleTimeString('th-TH')
               : '--:--:--'}
           </div>
 
           {currentPoint && (
-            <div className="text-[11px] text-slate-400">
-              ความเร็ว: <span className="text-white font-mono">{currentPoint.speedMps} m/s</span> | ทิศ: <span className="text-white font-mono">{currentPoint.headingDeg}°</span>
+            <div className="text-[11px] text-muted-foreground">
+              ความเร็ว: <span className="text-foreground font-mono font-bold">{currentPoint.speedMps} m/s</span> | ทิศ: <span className="text-foreground font-mono font-bold">{currentPoint.headingDeg}°</span>
             </div>
           )}
 
           {/* Speed Multiplier */}
-          <div className="flex items-center gap-1 bg-navy-950 p-0.5 rounded border border-navy-800">
+          <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border">
             {[1, 2, 5, 10].map((sp) => (
               <button
                 key={sp}
                 onClick={() => setSpeed(sp)}
-                className={`px-2 py-0.5 text-[10px] font-semibold rounded ${
+                className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
                   speed === sp
-                    ? 'bg-cyan-500 text-navy-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-card text-primary font-bold shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {sp}x
@@ -184,14 +184,14 @@ export default function SimulationTimeline({
         <div className="flex items-center gap-1">
           <button
             onClick={handlePlayPause}
-            className="w-8 h-8 rounded-full bg-cyan-500 hover:bg-cyan-400 text-navy-950 flex items-center justify-center shadow-glow-cyan transition-transform active:scale-95"
+            className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 text-white flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer"
             title={isPlaying ? 'หยุดชั่วคราว (Pause)' : 'เล่น (Play)'}
           >
             {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
           </button>
           <button
             onClick={handleReset}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-navy-800"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             title="รีเซ็ตไปที่จุดเริ่มต้น (Reset)"
           >
             <RotateCcw className="w-4 h-4" />
@@ -206,9 +206,9 @@ export default function SimulationTimeline({
             max={Math.max(0, trackpoints.length - 1)}
             value={currentIndex}
             onChange={handleScrub}
-            className="flex-1 accent-cyan-400 h-1.5 bg-navy-950 rounded-lg cursor-pointer"
+            className="flex-1 accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
           />
-          <span className="font-mono text-[10px] text-slate-400 w-12 text-right">
+          <span className="font-mono text-[10px] text-muted-foreground w-12 text-right">
             {currentIndex + 1} / {trackpoints.length}
           </span>
         </div>

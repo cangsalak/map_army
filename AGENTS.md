@@ -22,12 +22,19 @@
 5. **ทดสอบและรายงานตามความจริง (Truthful Verification)**:
    - ห้ามอ้างว่าได้แก้ไขหรือทดสอบผ่านแล้วหากยังไม่ได้รันคำสั่งจริง
    - ต้องรันคำสั่งจริงและระบุ Output ที่ได้จากการรันเสมอ
-   - ต้องแยกผล Unit Test/Integration Test ออกจากการทดสอบกับอุปกรณ์โดรนจริง (Hardware Device Test)
 6. **กฎความปลอดภัยของ Version Control (Git Operations)**:
    - **ห้ามรัน `git commit` หรือ `git push` เด็ดขาด** เว้นแต่จะได้รับคำสั่งอย่างชัดเจนจากผู้ใช้ (`ยังไม่ได้บอกให้เอาขึ้น git เลย`)
 7. **การรักษาความสมบูรณ์ของเอกสารความจำ**:
    - ทุกครั้งที่เริ่มเซสชันใหม่ ต้องอ่านเอกสารความจำและตรวจสอบสถานะ Git/Source Code ก่อนเริ่มงาน
    - หลังเสร็จสิ้นงานแต่ละส่วน ต้องอัปเดต `docs/PROJECT_STATUS.md` และ `docs/TEST_REPORT.md` ทุกครั้ง
+8. **กฎการพัฒนา UI/UX และ NextAdmin Design System**:
+   - **อ่าน `docs/DESIGN_SYSTEM.md` และ `docs/UI_COMPONENTS.md` ก่อนเริ่มปรับแต่ง UI ทุกครั้ง**
+   - **ห้ามกำหนด Hex Colors หรือ Button Style เฉพาะหน้าโดยไม่จำเป็น**: ต้องใช้ Semantic Design Tokens (`bg-background`, `bg-card`, `text-foreground`, `border-border`, ฯลฯ) ผ่าน Tailwind
+   - **ต้องใช้ Shared UI Components ที่มีอยู่ก่อน**: ใช้ `Button`, `Card`, `Table`, `Badge`, `Modal`, `FormField`, `PageHeader` จาก `@/components/ui/primitives` และ `DashboardLayout` จาก `@/components/layout/DashboardLayout`
+   - **ห้ามสร้าง Theme Provider ซ้ำ**: ระบบใช้ `ThemeProvider` กลางใน `@/lib/theme-context` เพียงจุดเดียว
+   - **ต้องตรวจสอบทั้ง Light Mode และ Dark Mode เสมอ**: ห้ามทำให้แสดงผลได้เฉพาะ Dark Mode หรือเกิด Hydration Flash
+   - **ต้องรักษา API, Business Logic, Cesium Isolation และ Authentication**: การเปลี่ยน Theme ห้ามกระทบ Cesium Canvas, WebGL interaction หรือ Map Bearing (-90° / 270°)
+   - **ต้องอัปเดต `docs/UI_AUDIT.md` ทุกครั้งที่มีการเพิ่มหรือปรับปรุง Route**
 
 ---
 
@@ -80,4 +87,7 @@ graph TD
 - [docs/PROJECT_STATUS.md](file:///Users/cangsalak/project/maparmy/docs/PROJECT_STATUS.md): ตารางติดตามสถานะงานทุก Requirements
 - [docs/DECISIONS.md](file:///Users/cangsalak/project/maparmy/docs/DECISIONS.md): บันทึกการตัดสินใจทางสถาปัตยกรรม (Architecture Decision Records)
 - [docs/TEST_REPORT.md](file:///Users/cangsalak/project/maparmy/docs/TEST_REPORT.md): บันทึกผลการทดสอบจริงจากคำสั่งทดสอบ
+- [docs/DESIGN_SYSTEM.md](file:///Users/cangsalak/project/maparmy/docs/DESIGN_SYSTEM.md): NextAdmin Global Design System, Tokens, Typography, Theme
+- [docs/UI_COMPONENTS.md](file:///Users/cangsalak/project/maparmy/docs/UI_COMPONENTS.md): Shared UI Components API, Props, และตัวอย่างการใช้งาน
+- [docs/UI_AUDIT.md](file:///Users/cangsalak/project/maparmy/docs/UI_AUDIT.md): ตารางและผลการตรวจสอบ Route ทุกหน้าในระบบ
 - [prompt.md](file:///Users/cangsalak/project/maparmy/prompt.md): Master Specification สำหรับการแก้ไขปัญหาเชิงลึก 10 Phases

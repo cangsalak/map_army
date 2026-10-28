@@ -1,27 +1,31 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Sidebar from '@/components/layout/Sidebar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import {
+  Button,
+  Badge,
+  Card,
+  Modal,
+  FormField,
+  Input,
+  Select,
+} from '@/components/ui/primitives';
 import {
   Layers,
   Plus,
   Upload,
-  CheckCircle2,
-  AlertTriangle,
   Play,
-  FileText,
   Boxes,
   FileCode,
   HardDrive,
   Clock,
-  Sparkles,
   MapPin,
-  Calendar,
-  Compass,
 } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { cn } from '@/components/ui/primitives';
 
 export default function SurveysPage() {
   const [areas, setAreas] = useState<any[]>([]);
@@ -135,7 +139,6 @@ export default function SurveysPage() {
     try {
       const name = fileName.trim() || `${assetType}_${Date.now()}.tif`;
       const fileSizeBytes = Math.max(1, Math.round(Number(fileSizeMb) * 1024 * 1024));
-      // Compute authentic cryptographic SHA-256 hash using Web Crypto API
       const encoder = new TextEncoder();
       const hashData = encoder.encode(`${activeSurvey.id}:${assetType}:${name}:${fileSizeBytes}`);
       const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
@@ -149,7 +152,10 @@ export default function SurveysPage() {
           assetType,
           fileName: name,
           fileSizeBytes,
-          mimeType: assetType === 'orthomosaic' || assetType === 'dsm_raster' ? 'image/tiff' : 'application/octet-stream',
+          mimeType:
+            assetType === 'orthomosaic' || assetType === 'dsm_raster'
+              ? 'image/tiff'
+              : 'application/octet-stream',
           checksumSha256: computedSha256,
           isPrimary: true,
         }),
@@ -157,7 +163,6 @@ export default function SurveysPage() {
 
       setIsUploadModalOpen(false);
       setFileName('');
-      // Reload survey detail
       const detail = await apiFetch<any>(`/surveys/${activeSurvey.id}`);
       setActiveSurvey(detail);
     } catch (err: any) {
@@ -173,7 +178,6 @@ export default function SurveysPage() {
         method: 'POST',
         body: JSON.stringify({ jobType: 'photogrammetry_ingest' }),
       });
-      // Reload detail
       const detail = await apiFetch<any>(`/surveys/${surveyId}`);
       setActiveSurvey(detail);
       await loadSurveys();
@@ -185,450 +189,419 @@ export default function SurveysPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-navy-950 font-sans">
-      <Navbar areas={areas} selectedAreaId={selectedAreaId} onSelectArea={setSelectedAreaId} />
-
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar areas={areas} selectedAreaId={selectedAreaId} onSelectArea={setSelectedAreaId} />
-
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="text-xs text-cyan-400 font-mono font-bold uppercase tracking-wider">
-                การจัดการไฟล์ภาพถ่ายโดรนและ Deliverables
-              </div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                รอบการสำรวจและชุดข้อมูลผลลัพธ์ (Drone Deliverables)
-              </h1>
-              <p className="text-slate-400 text-xs mt-1">
-                จัดเก็บภาพถ่ายออร์โธโมเสก, โมเดลระดับความสูง DSM/DTM, 3D Tiles และไฟล์เวกเตอร์ใน S3 Object Storage
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                disabled={!selectedAreaId}
-                onClick={() => setIsCreateSurveyModalOpen(true)}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 text-navy-950 font-bold rounded-lg text-xs flex items-center gap-2 shadow-glow-cyan transition-all"
+    <DashboardLayout
+      areas={areas}
+      selectedAreaId={selectedAreaId}
+      onSelectArea={setSelectedAreaId}
+    >
+      <PageHeader
+        title="รอบการสำรวจและชุดข้อมูลผลลัพธ์ (Drone Deliverables)"
+        description="จัดเก็บภาพถ่ายออร์โธโมเสก, โมเดลระดับความสูง DSM/DTM, 3D Tiles และไฟล์เวกเตอร์ใน S3 Object Storage"
+        icon={Layers}
+        breadcrumbs={[
+          { label: 'หน้าหลัก', href: '/' },
+          { label: 'รอบบินสำรวจและไฟล์โดรน' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              disabled={!selectedAreaId}
+              onClick={() => setIsCreateSurveyModalOpen(true)}
+              variant="primary"
+              className="gap-2 text-xs font-semibold"
+            >
+              <Plus className="w-4 h-4" />
+              <span>เพิ่มรอบบินสำรวจใหม่ (New Survey)</span>
+            </Button>
+            {activeSurvey && (
+              <Button
+                onClick={() => setIsUploadModalOpen(true)}
+                variant="outline"
+                className="gap-2 text-xs font-semibold"
               >
-                <Plus className="w-4 h-4" />
-                เพิ่มรอบบินสำรวจใหม่ (New Survey)
-              </button>
-              {activeSurvey && (
-                <button
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="px-4 py-2 bg-navy-900 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-bold rounded-lg text-xs flex items-center gap-2 transition-all"
-                >
-                  <Upload className="w-4 h-4" />
-                  เพิ่มไฟล์ Deliverable
-                </button>
+                <Upload className="w-4 h-4 text-primary" />
+                <span>เพิ่มไฟล์ Deliverable</span>
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Area Selector Pill Tabs */}
+      {areas.length > 0 ? (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-border text-xs">
+          <span className="text-muted-foreground text-xs font-medium mr-1 shrink-0">
+            เลือกพื้นที่:
+          </span>
+          {areas.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => setSelectedAreaId(a.id)}
+              className={cn(
+                'px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all border shrink-0 cursor-pointer',
+                a.id === selectedAreaId
+                  ? 'bg-primary text-primary-foreground border-primary font-semibold shadow-sm'
+                  : 'bg-card text-foreground hover:bg-card-secondary border-border'
               )}
+            >
+              {a.name}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="p-8 rounded-2xl border border-dashed border-border bg-card/50 text-center space-y-3">
+          <MapPin className="w-8 h-8 text-muted-foreground mx-auto" />
+          <div className="text-sm font-bold text-foreground">ยังไม่มีพื้นที่ในการดูแล</div>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            เริ่มต้นด้วยการสร้างพื้นที่ในการดูแลก่อน เพื่อกำหนดขอบเขตพิกัด PostGIS สำหรับการสำรวจทางอากาศ
+          </p>
+          <Link
+            href="/areas"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-sm hover:opacity-90 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>สร้างพื้นที่ดูแลใหม่ที่หน้าจัดการพื้นที่</span>
+          </Link>
+        </div>
+      )}
+
+      {/* Main Layout Grid */}
+      {areas.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Survey Timeline List */}
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                <Layers className="w-4 h-4 text-primary" />
+                ประวัติรอบการบินสำรวจ ({surveys.length})
+              </h3>
+              <button
+                onClick={() => setIsCreateSurveyModalOpen(true)}
+                className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                เพิ่มรอบบิน
+              </button>
             </div>
+
+            {surveys.length === 0 ? (
+              <div className="p-6 text-center text-muted-foreground text-xs space-y-3 border border-dashed border-border rounded-xl">
+                <Clock className="w-6 h-6 mx-auto text-muted-foreground" />
+                <div>ยังไม่มีรอบการสำรวจสำหรับพื้นที่นี้</div>
+                <Button
+                  onClick={() => setIsCreateSurveyModalOpen(true)}
+                  variant="primary"
+                  size="sm"
+                >
+                  + เพิ่มรอบบินสำรวจแรก
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {surveys.map((s) => {
+                  const isSelected = activeSurvey?.id === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => handleSelectSurvey(s.id)}
+                      className={cn(
+                        'w-full text-left p-3.5 rounded-xl border text-xs transition-all space-y-1.5 block cursor-pointer',
+                        isSelected
+                          ? 'bg-primary/10 border-primary text-foreground shadow-sm'
+                          : 'bg-card border-border hover:border-primary/40 text-foreground'
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-primary">{s.surveyCode}</span>
+                        <Badge
+                          variant={s.processingStatus === 'completed' ? 'success' : 'warning'}
+                          className="text-[10px]"
+                        >
+                          {s.processingStatus}
+                        </Badge>
+                      </div>
+
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                        <span>วันที่: {new Date(s.surveyDate).toLocaleDateString('th-TH')}</span>
+                        <span>•</span>
+                        <span>{s.droneModel || 'DJI Drone'}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {/* Right Columns: Active Survey Details & Deliverables */}
+          <div className="lg:col-span-2 space-y-5">
+            {activeSurvey ? (
+              <>
+                {/* Survey Metadata Card */}
+                <Card className="p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+                    <div>
+                      <div className="text-[10px] font-mono text-primary uppercase font-bold">
+                        รหัสรอบสำรวจ: {activeSurvey.surveyCode}
+                      </div>
+                      <h2 className="text-lg font-bold text-foreground">
+                        {activeSurvey.areaName || 'พื้นที่สำรวจ'}
+                      </h2>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        ทำการบินวันที่:{' '}
+                        {new Date(activeSurvey.surveyDate).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleTriggerProcess(activeSurvey.id)}
+                        disabled={isProcessing}
+                        isLoading={isProcessing}
+                        variant="primary"
+                        size="sm"
+                        className="gap-1.5"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>เริ่มกระบวนการ Photogrammetry Pipeline</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Technical Specs Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-3 bg-card-secondary rounded-xl border border-border">
+                      <div className="text-[10px] text-muted-foreground">รุ่นอากาศยานโดรน</div>
+                      <div className="font-semibold text-foreground mt-0.5 truncate">
+                        {activeSurvey.droneModel || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-card-secondary rounded-xl border border-border">
+                      <div className="text-[10px] text-muted-foreground">ชนิดกล้อง / เซนเซอร์</div>
+                      <div className="font-semibold text-foreground mt-0.5 truncate">
+                        {activeSurvey.sensorType || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-card-secondary rounded-xl border border-border">
+                      <div className="text-[10px] text-muted-foreground">ความสูงการบิน (Altitude)</div>
+                      <div className="font-semibold text-primary font-mono mt-0.5">
+                        {activeSurvey.flightAltitudeM ? `${activeSurvey.flightAltitudeM} ม.` : '120 ม.'}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-card-secondary rounded-xl border border-border">
+                      <div className="text-[10px] text-muted-foreground">ความละเอียดภาพพื้นดิน GSD</div>
+                      <div className="font-semibold text-primary font-mono mt-0.5">
+                        {activeSurvey.groundSampleDistanceCm
+                          ? `${activeSurvey.groundSampleDistanceCm} ซม./พิกเซล`
+                          : '2.5 ซม./พิกเซล'}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Assets Card */}
+                <Card className="p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-3">
+                    <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <HardDrive className="w-4 h-4 text-primary" />
+                      ไฟล์ผลลัพธ์ใน Object Storage ({activeSurvey.assets?.length || 0})
+                    </h3>
+                    <Button
+                      onClick={() => setIsUploadModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-xs font-semibold"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      เพิ่มไฟล์ผลลัพธ์
+                    </Button>
+                  </div>
+
+                  {!activeSurvey.assets || activeSurvey.assets.length === 0 ? (
+                    <div className="p-6 text-center text-muted-foreground text-xs border border-dashed border-border rounded-xl space-y-2">
+                      <div>ยังไม่มีไฟล์ผลลัพธ์ที่ลงทะเบียนสำหรับรอบการสำรวจนี้</div>
+                      <Button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        variant="primary"
+                        size="sm"
+                      >
+                        + อัปโหลดไฟล์ Deliverable แรก
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {activeSurvey.assets.map((ass: any) => (
+                        <div
+                          key={ass.id}
+                          className="p-3 bg-card-secondary border border-border rounded-xl flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+                              {ass.assetType === 'tiles_3d' ? (
+                                <Boxes className="w-4 h-4" />
+                              ) : ass.assetType === 'geojson_vector' ? (
+                                <FileCode className="w-4 h-4" />
+                              ) : (
+                                <Layers className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-foreground">{ass.fileName}</div>
+                              <div className="text-[10px] text-muted-foreground font-mono">
+                                ประเภท: {ass.assetType} • ขนาด:{' '}
+                                {(ass.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB
+                              </div>
+                            </div>
+                          </div>
+
+                          <Badge variant="success" className="text-[10px]">
+                            พร้อมแสดงผลบน 3D Map
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </>
+            ) : (
+              <Card className="p-12 text-center text-muted-foreground text-sm">
+                เลือกรอบบินสำรวจเพื่อดูไฟล์ผลลัพธ์ หรือคลิกปุ่ม &quot;เพิ่มรอบบินสำรวจใหม่&quot;
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal 1: Create New Survey Round */}
+      <Modal
+        isOpen={isCreateSurveyModalOpen}
+        onClose={() => setIsCreateSurveyModalOpen(false)}
+        title="ลงทะเบียนรอบการบินสำรวจใหม่ (New Survey Round)"
+        description="ระบุข้อมูลเที่ยวบินและคุณสมบัติเซนเซอร์ของโดรน"
+        maxWidth="lg"
+      >
+        <form onSubmit={handleCreateSurvey} className="space-y-4">
+          <FormField label="รหัสรอบสำรวจ (Survey Code)" required>
+            <Input
+              required
+              placeholder="เช่น SURV-MTP-2026-001"
+              value={surveyCode}
+              onChange={(e) => setSurveyCode(e.target.value)}
+            />
+          </FormField>
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="วันที่ทำการบิน" required>
+              <Input
+                type="date"
+                required
+                value={surveyDate}
+                onChange={(e) => setSurveyDate(e.target.value)}
+              />
+            </FormField>
+            <FormField label="รุ่นอากาศยานโดรน">
+              <Input
+                value={droneModel}
+                onChange={(e) => setDroneModel(e.target.value)}
+              />
+            </FormField>
           </div>
 
-          {/* Area Selector Tabs */}
-          {areas.length > 0 ? (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-800 text-xs">
-              {areas.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => setSelectedAreaId(a.id)}
-                  className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                    a.id === selectedAreaId
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-400 hover:text-white bg-navy-950/60'
-                  }`}
-                >
-                  {a.name}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 rounded-xl border border-dashed border-slate-800 bg-navy-950/50 text-center space-y-3">
-              <MapPin className="w-8 h-8 text-slate-500 mx-auto" />
-              <div className="text-sm font-bold text-slate-300">ยังไม่มีพื้นที่ในการดูแล</div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                เริ่มต้นด้วยการสร้างพื้นที่ในการดูแลก่อน เพื่อกำหนดขอบเขตพิกัด PostGIS สำหรับการสำรวจทางอากาศ
-              </p>
-              <Link
-                href="/areas"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                สร้างพื้นที่ดูแลใหม่ที่หน้าจัดการพื้นที่ (Go to Areas)
-              </Link>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="ความสูงการบิน (เมตร)">
+              <Input
+                type="number"
+                value={flightAltitudeM}
+                onChange={(e) => setFlightAltitudeM(Number(e.target.value))}
+              />
+            </FormField>
+            <FormField label="GSD (ซม./พิกเซล)">
+              <Input
+                type="number"
+                step="0.1"
+                value={gsdCm}
+                onChange={(e) => setGsdCm(Number(e.target.value))}
+              />
+            </FormField>
+          </div>
 
-          {/* Main Layout Grid */}
-          {areas.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column: Survey Timeline List */}
-              <div className="gis-panel rounded-xl p-5 border border-slate-800 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-cyan-400" />
-                    ประวัติรอบการบินสำรวจ ({surveys.length})
-                  </h3>
-                  <button
-                    onClick={() => setIsCreateSurveyModalOpen(true)}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    เพิ่มรอบบิน
-                  </button>
-                </div>
+          <FormField label="ชนิดกล้อง / เลนส์">
+            <Input
+              value={sensorType}
+              onChange={(e) => setSensorType(e.target.value)}
+            />
+          </FormField>
 
-                {surveys.length === 0 ? (
-                  <div className="p-6 text-center text-slate-500 text-xs space-y-3 border border-dashed border-slate-800 rounded-lg">
-                    <Clock className="w-6 h-6 mx-auto text-slate-600" />
-                    <div>ยังไม่มีรอบการสำรวจสำหรับพื้นที่นี้</div>
-                    <button
-                      onClick={() => setIsCreateSurveyModalOpen(true)}
-                      className="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-md text-xs font-bold border border-cyan-500/40 hover:bg-cyan-500/30 transition-all"
-                    >
-                      + เพิ่มรอบบินสำรวจแรก
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {surveys.map((s) => {
-                      const isSelected = activeSurvey?.id === s.id;
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={() => handleSelectSurvey(s.id)}
-                          className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all space-y-1.5 ${
-                            isSelected
-                              ? 'bg-cyan-950/40 border-cyan-500 text-white shadow-glow-cyan'
-                              : 'bg-navy-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono font-bold text-cyan-400">{s.surveyCode}</span>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                                s.processingStatus === 'completed'
-                                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
-                                  : 'bg-amber-950/80 text-amber-400 border border-amber-500/30'
-                              }`}
-                            >
-                              {s.processingStatus}
-                            </span>
-                          </div>
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateSurveyModalOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="primary">
+              บันทึกรอบบิน
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
-                          <div className="text-[11px] text-slate-400 flex items-center gap-2">
-                            <span>วันที่: {new Date(s.surveyDate).toLocaleDateString('th-TH')}</span>
-                            <span>•</span>
-                            <span>{s.droneModel || 'DJI Drone'}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+      {/* Modal 2: Deliverable Asset Upload */}
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        title="ลงทะเบียนไฟล์ Deliverable ผลลัพธ์โดรน"
+        description="นำเข้าไฟล์ Orthomosaic GeoTIFF, DSM Raster หรือ 3D Tiles"
+        maxWidth="md"
+      >
+        <form onSubmit={handleUploadAsset} className="space-y-4">
+          <FormField label="ประเภทไฟล์ Deliverable" required>
+            <Select
+              value={assetType}
+              onChange={(e) => setAssetType(e.target.value)}
+            >
+              <option value="orthomosaic">Orthophoto / Orthomosaic (GeoTIFF)</option>
+              <option value="dsm_raster">Digital Surface Model - DSM (GeoTIFF)</option>
+              <option value="tiles_3d">Cesium 3D Tiles (b3dm / tileset.json)</option>
+              <option value="geojson_vector">Vector Footprint / Boundaries (GeoJSON)</option>
+            </Select>
+          </FormField>
 
-              {/* Right Columns: Active Survey Details & Deliverables */}
-              <div className="lg:col-span-2 space-y-5">
-                {activeSurvey ? (
-                  <>
-                    {/* Survey Metadata Card */}
-                    <div className="gis-panel rounded-xl p-5 border border-slate-800 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                        <div>
-                          <div className="text-[10px] font-mono text-cyan-400 uppercase">
-                            รหัสรอบสำรวจ: {activeSurvey.surveyCode}
-                          </div>
-                          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            {activeSurvey.areaName || 'พื้นที่สำรวจ'}
-                          </h2>
-                          <div className="text-xs text-slate-400 mt-0.5">
-                            ทำการบินวันที่: {new Date(activeSurvey.surveyDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </div>
-                        </div>
+          <FormField label="ชื่อไฟล์เอกสาร (File Name)">
+            <Input
+              placeholder={`เช่น mtp_ortho_${Date.now()}.tif`}
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+            />
+          </FormField>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleTriggerProcess(activeSurvey.id)}
-                            disabled={isProcessing}
-                            className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-navy-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                            {isProcessing ? 'กำลังประมวลผล...' : 'เริ่มกระบวนการ Photogrammetry Pipeline'}
-                          </button>
-                        </div>
-                      </div>
+          <FormField label="ขนาดไฟล์โดยประมาณ (MB)">
+            <Input
+              type="number"
+              value={fileSizeMb}
+              onChange={(e) => setFileSizeMb(Number(e.target.value))}
+            />
+          </FormField>
 
-                      {/* Technical Specs Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                        <div className="p-3 bg-navy-950/60 rounded-lg border border-slate-800">
-                          <div className="text-[10px] text-slate-500">รุ่นอากาศยานโดรน</div>
-                          <div className="font-semibold text-slate-200 mt-0.5 truncate">
-                            {activeSurvey.droneModel || 'N/A'}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-navy-950/60 rounded-lg border border-slate-800">
-                          <div className="text-[10px] text-slate-500">ชนิดกล้อง / เซนเซอร์</div>
-                          <div className="font-semibold text-slate-200 mt-0.5 truncate">
-                            {activeSurvey.sensorType || 'N/A'}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-navy-950/60 rounded-lg border border-slate-800">
-                          <div className="text-[10px] text-slate-500">ความสูงการบิน (Altitude)</div>
-                          <div className="font-semibold text-cyan-400 font-mono mt-0.5">
-                            {activeSurvey.flightAltitudeM ? `${activeSurvey.flightAltitudeM} ม.` : '120 ม.'}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-navy-950/60 rounded-lg border border-slate-800">
-                          <div className="text-[10px] text-slate-500">ความละเอียดภาพพื้นดิน GSD</div>
-                          <div className="font-semibold text-cyan-400 font-mono mt-0.5">
-                            {activeSurvey.groundSampleDistanceCm ? `${activeSurvey.groundSampleDistanceCm} ซม./พิกเซล` : '2.5 ซม./พิกเซล'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Assets Table */}
-                    <div className="gis-panel rounded-xl p-5 border border-slate-800 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                          <HardDrive className="w-4 h-4 text-cyan-400" />
-                          ไฟล์ผลลัพธ์ใน Object Storage ({activeSurvey.assets?.length || 0})
-                        </h3>
-                        <button
-                          onClick={() => setIsUploadModalOpen(true)}
-                          className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          เพิ่มไฟล์ผลลัพธ์
-                        </button>
-                      </div>
-
-                      {(!activeSurvey.assets || activeSurvey.assets.length === 0) ? (
-                        <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-lg space-y-2">
-                          <div>ยังไม่มีไฟล์ผลลัพธ์ที่ลงทะเบียนสำหรับรอบการสำรวจนี้</div>
-                          <button
-                            onClick={() => setIsUploadModalOpen(true)}
-                            className="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-md text-xs font-bold border border-cyan-500/40 hover:bg-cyan-500/30 transition-all"
-                          >
-                            + อัปโหลดไฟล์ Deliverable แรก
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {activeSurvey.assets.map((ass: any) => (
-                            <div
-                              key={ass.id}
-                              className="p-3 bg-navy-950/80 border border-slate-800/80 rounded-lg flex items-center justify-between text-xs"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
-                                  {ass.assetType === 'tiles_3d' ? (
-                                    <Boxes className="w-4 h-4" />
-                                  ) : ass.assetType === 'geojson_vector' ? (
-                                    <FileCode className="w-4 h-4" />
-                                  ) : (
-                                    <Layers className="w-4 h-4" />
-                                  )}
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-slate-200">{ass.fileName}</div>
-                                  <div className="text-[10px] text-slate-500 font-mono">
-                                    ประเภท: {ass.assetType} • ขนาด:{' '}
-                                    {(ass.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB
-                                  </div>
-                                </div>
-                              </div>
-
-                              <span className="text-xs font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-500/30">
-                                พร้อมแสดงผลบน 3D Map
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="gis-panel rounded-xl p-12 text-center text-slate-500 text-sm border border-slate-800">
-                    เลือกรอบบินสำรวจเพื่อดูไฟล์ผลลัพธ์ หรือคลิกปุ่ม &quot;เพิ่มรอบบินสำรวจใหม่&quot;
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Modal 1: Create New Survey Round */}
-          {isCreateSurveyModalOpen && (
-            <div className="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="gis-panel rounded-2xl p-6 border border-cyan-500/30 max-w-lg w-full shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-cyan-400" />
-                    ลงทะเบียนรอบการบินสำรวจใหม่ (New Survey Round)
-                  </h3>
-                  <button
-                    onClick={() => setIsCreateSurveyModalOpen(false)}
-                    className="text-slate-400 hover:text-white text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <form onSubmit={handleCreateSurvey} className="space-y-4 text-xs">
-                  <div>
-                    <label className="block text-slate-300 font-medium mb-1">รหัสรอบสำรวจ (Survey Code) *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="เช่น SURV-MTP-2026-001"
-                      value={surveyCode}
-                      onChange={(e) => setSurveyCode(e.target.value)}
-                      className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-slate-300 font-medium mb-1">วันที่ทำการบิน *</label>
-                      <input
-                        type="date"
-                        required
-                        value={surveyDate}
-                        onChange={(e) => setSurveyDate(e.target.value)}
-                        className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-300 font-medium mb-1">รุ่นอากาศยานโดรน</label>
-                      <input
-                        type="text"
-                        value={droneModel}
-                        onChange={(e) => setDroneModel(e.target.value)}
-                        className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-slate-300 font-medium mb-1">ความสูงการบิน (เมตร)</label>
-                      <input
-                        type="number"
-                        value={flightAltitudeM}
-                        onChange={(e) => setFlightAltitudeM(Number(e.target.value))}
-                        className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-300 font-medium mb-1">GSD (ซม./พิกเซล)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={gsdCm}
-                        onChange={(e) => setGsdCm(Number(e.target.value))}
-                        className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400 font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setIsCreateSurveyModalOpen(false)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg"
-                    >
-                      ยกเลิก
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-navy-950 font-bold rounded-lg shadow-glow-cyan"
-                    >
-                      บันทึกรอบบินสำรวจ
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Modal 2: Upload Deliverable */}
-          {isUploadModalOpen && (
-            <div className="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="gis-panel rounded-2xl p-6 border border-cyan-500/30 max-w-lg w-full shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-cyan-400" />
-                    อัปโหลดชุดข้อมูล Deliverable
-                  </h3>
-                  <button
-                    onClick={() => setIsUploadModalOpen(false)}
-                    className="text-slate-400 hover:text-white text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <form onSubmit={handleUploadAsset} className="space-y-4 text-xs">
-                  <div>
-                    <label className="block text-slate-300 font-medium mb-1">ประเภทผลลัพธ์ (Asset Type) *</label>
-                    <select
-                      value={assetType}
-                      onChange={(e) => setAssetType(e.target.value)}
-                      className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 outline-none focus:border-cyan-400 cursor-pointer"
-                    >
-                      <option value="orthomosaic">ภาพถ่ายออร์โธโมเสกความละเอียดสูง (Orthomosaic GeoTIFF)</option>
-                      <option value="dsm_raster">แบบจำลองระดับความสูงผิวดิน (DSM Raster Elevation)</option>
-                      <option value="tiles_3d">แบบจำลอง 3 มิติเชิงวัตถุ (Cesium 3D Tiles / Mesh)</option>
-                      <option value="geojson_vector">เวกเตอร์รูปแปลงการเปลี่ยนแปลง (GeoJSON Vector Features)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-medium mb-1">ชื่อไฟล์ (File Name) *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={`เช่น ${assetType}_2026.tif`}
-                      value={fileName}
-                      onChange={(e) => setFileName(e.target.value)}
-                      className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-medium mb-1">ขนาดไฟล์โดยประมาณ (MB)</label>
-                    <input
-                      type="number"
-                      value={fileSizeMb}
-                      onChange={(e) => setFileSizeMb(Number(e.target.value))}
-                      className="w-full bg-navy-950 border border-slate-700 rounded-lg p-2.5 text-white outline-none focus:border-cyan-400 font-mono"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setIsUploadModalOpen(false)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg"
-                    >
-                      ยกเลิก
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-navy-950 font-bold rounded-lg shadow-glow-cyan"
-                    >
-                      ลงทะเบียนไฟล์ใน Object Storage
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsUploadModalOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="primary">
+              ยืนยันการลงทะเบียนไฟล์
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </DashboardLayout>
   );
 }

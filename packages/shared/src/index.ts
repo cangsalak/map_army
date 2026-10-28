@@ -14,4 +14,5 @@ export * from './schemas/symbols.schema.js';
 export * from './schemas/drone-mission.schema.js';
 export * from './types/kml.js';
 export * from './gis/kml-kmz-parser.js';
+export * from './gis/camera-controller.js';
 

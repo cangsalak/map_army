@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import Navbar from '@/components/layout/Navbar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import OperationsSidebar from '@/components/operations/OperationsSidebar';
 import LocationInspector from '@/components/operations/LocationInspector';
 import SimulationTimeline from '@/components/operations/SimulationTimeline';
@@ -87,7 +87,8 @@ export default function OperationsMapPage() {
   const [undoStack, setUndoStack] = useState<[number, number][][]>([]);
   const [redoStack, setRedoStack] = useState<[number, number][][]>([]);
 
-  const [mapMode2D, setMapMode2D] = useState(false);
+  // 2D / 3D Mode State (Defaults to 2D-First per specification)
+  const [mapMode2D, setMapMode2D] = useState(true);
   const [flyToCoords, setFlyToCoords] = useState<{ longitude: number; latitude: number; altitude?: number } | null>(null);
 
   // Modals state
@@ -475,21 +476,18 @@ export default function OperationsMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-navy-950 text-slate-100 font-sans">
-      {/* Global Navbar */}
-      <Navbar />
-
-      {/* Operations Sub-Toolbar */}
-      <div className="h-10 bg-navy-900 border-b border-navy-800 px-4 flex items-center justify-between z-20 text-xs">
+    <DashboardLayout noPadding>
+      {/* Operations Sub-Toolbar (NextAdmin Style) */}
+      <div className="h-11 bg-card border-b border-border px-4 flex items-center justify-between z-20 text-xs shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-cyan-400 font-semibold">
+          <div className="flex items-center gap-1.5 text-primary font-semibold">
             <FolderKanban className="w-4 h-4" />
             <span>โครงการ:</span>
           </div>
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="bg-navy-950 border border-navy-700 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-cyan-500 font-medium"
+            className="bg-card-secondary border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none focus:border-primary font-medium"
           >
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -500,7 +498,7 @@ export default function OperationsMapPage() {
 
           <button
             onClick={() => loadProjectData()}
-            className="p-1 rounded text-slate-400 hover:text-cyan-400 hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             title="รีเฟรชข้อมูลล่าสุด"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -511,19 +509,19 @@ export default function OperationsMapPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSymbolLibraryOpen(true)}
-            className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+            className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>คลังสัญลักษณ์ (Symbol Library)</span>
           </button>
 
-          <div className="flex items-center bg-navy-950 p-0.5 rounded border border-navy-800">
+          <div className="flex items-center bg-card-secondary p-0.5 rounded-lg border border-border">
             <button
               onClick={() => setMapMode2D(false)}
-              className={`px-2 py-0.5 text-[11px] font-medium rounded flex items-center gap-1 ${
+              className={`px-2.5 py-0.5 text-[11px] font-medium rounded-md flex items-center gap-1 transition-all ${
                 !mapMode2D
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-primary text-white font-semibold shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -531,10 +529,10 @@ export default function OperationsMapPage() {
             </button>
             <button
               onClick={() => setMapMode2D(true)}
-              className={`px-2 py-0.5 text-[11px] font-medium rounded flex items-center gap-1 ${
+              className={`px-2.5 py-0.5 text-[11px] font-medium rounded-md flex items-center gap-1 transition-all ${
                 mapMode2D
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-primary text-white font-semibold shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
@@ -721,6 +719,6 @@ export default function OperationsMapPage() {
         availableProjects={projects.map((p) => ({ id: p.id, name: p.name }))}
         onImportSuccess={() => loadProjectData()}
       />
-    </div>
+    </DashboardLayout>
   );
 }
